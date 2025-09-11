@@ -62,7 +62,7 @@ voice-clone-platform/
 
 1. Clone the repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/SyntaxisReaper/voice-clone-platform.git
 cd voice-clone-platform
 ```
 
@@ -88,6 +88,16 @@ npm run dev
 # Backend (in backend/ directory)
 uvicorn main:app --reload
 ```
+
+## 🚀 Deployment
+
+### Vercel (Frontend)
+1. Connect your GitHub repository to Vercel
+2. Set the root directory to `frontend`
+3. Deploy automatically
+
+### Environment Variables for Production
+- `NEXT_PUBLIC_API_URL`: Your backend API URL
 
 ## Documentation
 

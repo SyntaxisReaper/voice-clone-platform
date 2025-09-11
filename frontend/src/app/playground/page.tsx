@@ -79,71 +79,124 @@ export default function VoicePlayground() {
   useEffect(() => {
     const loadVoices = async () => {
       try {
-        const { getAvailableVoices, getTrainedVoices } = await import('@/lib/api')
+        // Check if we're in development mode and backend is available
+        const isDevelopment = process.env.NODE_ENV === 'development'
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
         
-        // Load available voices
-        const availableVoicesData = await getAvailableVoices()
-        const trainedVoicesData = await getTrainedVoices()
-        
-        const allVoices = [
-          ...availableVoicesData.owned_voices.map((v: any) => ({
-            ...v,
-            category: 'owned' as const
-          })),
-          ...availableVoicesData.licensed_voices.map((v: any) => ({
-            ...v,
-            category: 'licensed' as const  
-          })),
-          ...availableVoicesData.public_voices.map((v: any) => ({
-            ...v,
-            category: 'public' as const
-          })),
-          ...trainedVoicesData.voices.map((v: any) => ({
-            id: v.id,
-            name: v.name,
-            owner: 'You',
-            status: v.status,
-            quality: v.quality_score >= 90 ? 'excellent' : v.quality_score >= 70 ? 'good' : 'fair',
-            can_use: v.status === 'ready',
-            category: 'owned' as const,
-            tags: v.tags,
-            avatar: '🎤'
-          }))
-        ]
-        
-        setVoices(allVoices)
-        if (allVoices.length > 0 && !selectedVoice) {
-          setSelectedVoice(allVoices[0])
+        if (isDevelopment) {
+          // Try to check if backend is available
+          const response = await fetch(`${backendUrl}/health`, { 
+            method: 'GET',
+            signal: AbortSignal.timeout(5000) // 5 second timeout
+          })
+          
+          if (response.ok) {
+            // Backend is available, load real data
+            const { getAvailableVoices, getTrainedVoices } = await import('@/lib/api')
+            
+            const availableVoicesData = await getAvailableVoices()
+            const trainedVoicesData = await getTrainedVoices()
+            
+            const allVoices = [
+              ...availableVoicesData.owned_voices.map((v: any) => ({
+                ...v,
+                category: 'owned' as const
+              })),
+              ...availableVoicesData.licensed_voices.map((v: any) => ({
+                ...v,
+                category: 'licensed' as const  
+              })),
+              ...availableVoicesData.public_voices.map((v: any) => ({
+                ...v,
+                category: 'public' as const
+              })),
+              ...trainedVoicesData.voices.map((v: any) => ({
+                id: v.id,
+                name: v.name,
+                owner: 'You',
+                status: v.status,
+                quality: v.quality_score >= 90 ? 'excellent' : v.quality_score >= 70 ? 'good' : 'fair',
+                can_use: v.status === 'ready',
+                category: 'owned' as const,
+                tags: v.tags,
+                avatar: '🎤'
+              }))
+            ]
+            
+            setVoices(allVoices)
+            if (allVoices.length > 0 && !selectedVoice) {
+              setSelectedVoice(allVoices[0])
+            }
+            return
+          }
         }
+        
+        throw new Error('Backend not available or in production mode')
+        
       } catch (error) {
-        console.error('Failed to load voices:', error)
-        // Fallback to mock data if API fails
-        const mockVoices = [
+        console.log('Loading fallback demo voices...', error.message)
+        
+        // Use comprehensive demo data for production or when backend is unavailable
+        const demoVoices = [
           {
-            id: 'voice-1',
-            name: 'Professional Voice',
-            owner: 'You',
-            status: 'trained',
+            id: 'demo-alice',
+            name: 'Alice (Professional)',
+            owner: 'Demo',
+            status: 'ready',
             quality: 'excellent',
             can_use: true,
-            category: 'owned' as const,
-            tags: ['business', 'clear', 'authoritative'],
-            avatar: '👔'
+            category: 'public' as const,
+            tags: ['business', 'clear', 'authoritative', 'professional'],
+            avatar: '👩‍💼'
           },
           {
-            id: 'voice-2', 
-            name: 'Sarah Chen',
-            owner: 'Sarah C.',
-            status: 'trained',
+            id: 'demo-bob',
+            name: 'Bob (Narrator)',
+            owner: 'Demo',
+            status: 'ready',
             quality: 'excellent',
             can_use: true,
+            category: 'public' as const,
+            tags: ['warm', 'storytelling', 'deep', 'narrator'],
+            avatar: '👨‍🎤'
+          },
+          {
+            id: 'demo-emma',
+            name: 'Emma (Friendly)',
+            owner: 'Demo',
+            status: 'ready',
+            quality: 'good',
+            can_use: true,
             category: 'licensed' as const,
-            tags: ['warm', 'friendly', 'narrator'],
+            tags: ['friendly', 'casual', 'young', 'upbeat'],
             avatar: '👩‍🦱'
+          },
+          {
+            id: 'demo-james',
+            name: 'James (News)',
+            owner: 'Demo',
+            status: 'ready',
+            quality: 'excellent',
+            can_use: true,
+            category: 'public' as const,
+            tags: ['news', 'authoritative', 'clear', 'broadcast'],
+            avatar: '📺'
+          },
+          {
+            id: 'demo-sarah',
+            name: 'Sarah (Assistant)',
+            owner: 'You',
+            status: 'ready',
+            quality: 'good',
+            can_use: true,
+            category: 'owned' as const,
+            tags: ['helpful', 'assistant', 'calm', 'supportive'],
+            avatar: '🤖'
           }
         ]
-        setVoices(mockVoices)
-        setSelectedVoice(mockVoices[0])
+        
+        setVoices(demoVoices)
+        setSelectedVoice(demoVoices[0])
       } finally {
         setIsLoadingVoices(false)
       }
@@ -187,7 +240,29 @@ export default function VoicePlayground() {
     setRecentJobs(prev => [newJob, ...prev.slice(0, 9)])
 
     try {
-      // Import API functions dynamically to avoid SSR issues
+      // Check if we're in demo mode (no backend available)
+      const isDemoMode = selectedVoice.id.startsWith('demo-') || process.env.NODE_ENV === 'production'
+      
+      if (isDemoMode) {
+        // Simulate generation process for demo
+        await new Promise(resolve => setTimeout(resolve, 2000)) // 2 second delay
+        
+        // Create a demo audio URL (silent audio for demo purposes)
+        const demoAudioUrl = createDemoAudio(text.trim(), selectedVoice.name)
+        
+        const completedJob = {
+          ...newJob,
+          status: 'completed' as const,
+          audioUrl: demoAudioUrl,
+          duration: Math.max(2, Math.floor(text.length * 0.1)) // Estimate duration
+        }
+        
+        setCurrentJob(completedJob)
+        setRecentJobs(prev => [completedJob, ...prev.slice(1)])
+        return
+      }
+      
+      // Real API mode (development with backend)
       const { generateSpeech, pollJobStatus, downloadAudio, createAudioUrl } = await import('@/lib/api')
       
       // Start TTS generation
@@ -277,6 +352,85 @@ export default function VoicePlayground() {
     })
   }
 
+  const createDemoAudio = (text: string, voiceName: string): string => {
+    // Create a simple demo audio (1-second beep for demonstration)
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const duration = Math.max(1, text.length * 0.05) // Base duration on text length
+    const sampleRate = audioContext.sampleRate
+    const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate)
+    const channelData = buffer.getChannelData(0)
+    
+    // Generate a simple tone (for demo purposes)
+    for (let i = 0; i < channelData.length; i++) {
+      // Create a soft sine wave tone at 440Hz
+      const frequency = 440
+      const sample = Math.sin(2 * Math.PI * frequency * (i / sampleRate)) * 0.1
+      channelData[i] = sample * Math.exp(-i / (sampleRate * 0.5)) // Fade out
+    }
+    
+    // Convert buffer to blob
+    const audioBlob = bufferToWave(buffer, buffer.length)
+    return URL.createObjectURL(audioBlob)
+  }
+  
+  // Helper function to convert AudioBuffer to WAV blob
+  const bufferToWave = (audioBuffer: AudioBuffer, len: number): Blob => {
+    const numOfChan = audioBuffer.numberOfChannels
+    const length = len * numOfChan * 2 + 44
+    const buffer = new ArrayBuffer(length)
+    const view = new DataView(buffer)
+    const channels = []
+    let sample
+    let offset = 0
+    let pos = 0
+    
+    // Write WAV header
+    const setUint16 = (data: number) => {
+      view.setUint16(pos, data, true)
+      pos += 2
+    }
+    
+    const setUint32 = (data: number) => {
+      view.setUint32(pos, data, true)
+      pos += 4
+    }
+    
+    // RIFF identifier
+    setUint32(0x46464952) // "RIFF"
+    setUint32(length - 8) // file length minus RIFF identifier
+    setUint32(0x45564157) // "WAVE"
+    
+    // format chunk identifier
+    setUint32(0x20746d66) // "fmt "
+    setUint32(16) // format chunk length
+    setUint16(1) // sample format (raw)
+    setUint16(numOfChan)
+    setUint32(audioBuffer.sampleRate)
+    setUint32(audioBuffer.sampleRate * 2 * numOfChan) // byte rate
+    setUint16(numOfChan * 2) // block align
+    setUint16(16) // bits per sample
+    
+    // data chunk identifier
+    setUint32(0x61746164) // "data"
+    setUint32(length - pos - 4) // data chunk length
+    
+    // write the PCM samples
+    for (let i = 0; i < audioBuffer.numberOfChannels; i++)
+      channels.push(audioBuffer.getChannelData(i))
+    
+    while (pos < length) {
+      for (let i = 0; i < numOfChan; i++) {
+        sample = Math.max(-1, Math.min(1, channels[i][offset]))
+        sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF
+        view.setInt16(pos, sample, true)
+        pos += 2
+      }
+      offset++
+    }
+    
+    return new Blob([buffer], { type: 'audio/wav' })
+  }
+
   const getQualityColor = (quality: string) => {
     switch (quality) {
       case 'excellent': return 'text-green-600'
@@ -304,6 +458,25 @@ export default function VoicePlayground() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Demo Mode Notification */}
+        {voices.length > 0 && voices[0].id.startsWith('demo-') && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">Demo Mode Active</h3>
+                <div className="mt-1 text-sm text-blue-700">
+                  <p>You're using demo voices. Audio generation will create sample tones. Connect to a backend server for full TTS functionality.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">

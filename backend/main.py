@@ -8,7 +8,7 @@ from loguru import logger
 from app.core.config import settings
 from app.core.database import engine
 from app.models.base import Base
-from app.api.routes import auth, voice, dashboard, licensing, tts
+from app.api.routes import auth, voice, dashboard, licensing, tts, security
 
 
 @asynccontextmanager
@@ -67,6 +67,7 @@ app.include_router(voice.router, prefix="/api/voice", tags=["Voice Management"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(licensing.router, prefix="/api/licensing", tags=["Licensing"])
 app.include_router(tts.router, prefix="/api/tts", tags=["Text-to-Speech"])
+app.include_router(security.router, prefix="/api/security", tags=["Security"])
 
 
 @app.exception_handler(Exception)

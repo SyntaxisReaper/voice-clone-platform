@@ -198,6 +198,27 @@ export const getDashboardStats = async () => {
   return response.data;
 };
 
+// Security Reports
+export interface SecurityReportData {
+  type: 'security' | 'fraud' | 'unauthorized' | 'data' | 'other';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  email?: string;
+  anonymous: boolean;
+}
+
+export interface SecurityReportResponse {
+  id: string;
+  message: string;
+  status: string;
+  created_at: string;
+}
+
+export const submitSecurityReport = async (reportData: SecurityReportData): Promise<SecurityReportResponse> => {
+  const response = await api.post('/api/security/report', reportData);
+  return response.data;
+};
+
 // Utility functions
 export const pollJobStatus = async (
   jobId: string,

@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { submitSecurityReport, SecurityReportData } from '@/lib/api'
+import { useToast, ToastContainer } from '@/components/ui/Toast'
 import {
   ShieldCheckIcon,
   ExclamationTriangleIcon,
@@ -62,6 +64,8 @@ export default function CyberHelpPage() {
     email: '',
     anonymous: false
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { toasts, dismissToast, showSuccess, showError } = useToast()
 
   // Mock data
   const securityTips: SecurityTip[] = [
@@ -196,18 +200,67 @@ export default function CyberHelpPage() {
     }
   }
 
-  const handleReportSubmit = (e: React.FormEvent) => {
+  const handleReportSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Submit report to backend
-    console.log('Report submitted:', reportForm)
-    // Reset form
-    setReportForm({
-      type: 'security',
-      severity: 'medium', 
-      description: '',
-      email: '',
-      anonymous: false
-    })
+    
+    // Validate form
+    if (!reportForm.description.trim()) {
+      showError('Validation Error', 'Please provide a description of the security issue.')
+      return
+    }
+    
+    if (!reportForm.anonymous && !reportForm.email.trim()) {
+      showError('Validation Error', 'Please provide an email address or submit anonymously.')
+      return
+    }
+    
+    if (reportForm.description.trim().length < 10) {
+      showError('Validation Error', 'Description must be at least 10 characters long.')
+      return
+    }
+    
+    setIsSubmitting(true)
+    
+    try {
+      const reportData: SecurityReportData = {
+        type: reportForm.type as SecurityReportData['type'],
+        severity: reportForm.severity as SecurityReportData['severity'],
+        description: reportForm.description.trim(),
+        email: reportForm.anonymous ? undefined : reportForm.email.trim(),
+        anonymous: reportForm.anonymous
+      }
+      
+      const response = await submitSecurityReport(reportData)
+      
+      showSuccess(
+        'Report Submitted Successfully',
+        'Thank you for helping us improve security. We will review your report and respond if necessary.',
+        7000
+      )
+      
+      // Reset form
+      setReportForm({
+        type: 'security',
+        severity: 'medium', 
+        description: '',
+        email: '',
+        anonymous: false
+      })
+      
+    } catch (error: any) {
+      console.error('Error submitting security report:', error)
+      
+      let errorMessage = 'Please try again or contact support directly.'
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      showError('Submission Failed', errorMessage, 10000)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -625,10 +678,24 @@ export default function CyberHelpPage() {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    disabled={isSubmitting}
+                    className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
+                      isSubmitting 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-red-600 hover:bg-red-700'
+                    }`}
                   >
-                    <ExclamationTriangleIcon className="h-4 w-4 mr-2" />
-                    Submit Security Report
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin -ml-1 mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <ExclamationTriangleIcon className="h-4 w-4 mr-2" />
+                        Submit Security Report
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -636,6 +703,9 @@ export default function CyberHelpPage() {
           </div>
         )}
       </div>
+      
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

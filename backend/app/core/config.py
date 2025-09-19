@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from typing import List
 import os
@@ -18,11 +18,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days
     
-    # CORS
-    ALLOWED_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000"],
-        env="ALLOWED_ORIGINS"
-    )
+    # CORS - Handled manually to avoid pydantic parsing issues
     
     # Database
     DATABASE_URL: str = Field(..., env="DATABASE_URL")
@@ -87,10 +83,22 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
     UPLOAD_PATH: str = Field(default="./uploads", env="UPLOAD_PATH")
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore"
+    )
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        
+        # Handle ALLOWED_ORIGINS completely manually (as object attribute, not pydantic field)
+        origins_env = os.getenv('ALLOWED_ORIGINS')
+        if origins_env:
+            object.__setattr__(self, 'ALLOWED_ORIGINS', [origin.strip() for origin in origins_env.split(',') if origin.strip()])
+        else:
+            object.__setattr__(self, 'ALLOWED_ORIGINS', ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8000"])
 
 
 # Create settings instance

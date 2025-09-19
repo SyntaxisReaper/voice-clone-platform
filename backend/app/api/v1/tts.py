@@ -406,3 +406,92 @@ async def get_voice_model_info(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get voice model information"
         )
+
+
+@router.get("/stats")
+async def get_tts_stats(
+    current_user: User = Depends(get_current_user)
+):
+    """Get TTS service statistics"""
+    try:
+        # Get service stats
+        service_stats = tts_service.get_service_stats()
+        
+        # Get user-specific stats
+        user_jobs = await tts_service.list_user_jobs(str(current_user.id))
+        user_stats = {
+            "total_generations": len(user_jobs),
+            "completed_generations": len([j for j in user_jobs if j["status"] == "completed"]),
+            "failed_generations": len([j for j in user_jobs if j["status"] == "failed"]),
+            "pending_generations": len([j for j in user_jobs if j["status"] in ["pending", "processing"]]),
+            "total_characters": sum(len(j.get("text", "")) for j in user_jobs if j["status"] == "completed"),
+            "total_duration": sum(j.get("actual_duration", 0) for j in user_jobs if j["status"] == "completed"),
+            "average_quality": sum(j.get("quality_score", 0) for j in user_jobs if j["status"] == "completed" and j.get("quality_score")) / max(1, len([j for j in user_jobs if j["status"] == "completed" and j.get("quality_score")]))
+        }
+        
+        return {
+            "service_stats": service_stats,
+            "user_stats": user_stats
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get TTS stats"
+        )
+
+
+@router.post("/test")
+async def test_tts_generation(
+    current_user: User = Depends(get_current_user)
+):
+    """Test TTS generation with a sample text and voice"""
+    try:
+        # Find a suitable voice model for testing
+        test_model = await VoiceModel.find_one({
+            "$or": [
+                {"user_id": str(current_user.id)},
+                {"is_public": True}
+            ],
+            "status": "completed",
+            "deployment_status": "deployed"
+        })
+        
+        if not test_model:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No voice models available for testing"
+            )
+        
+        # Generate test speech
+        test_text = "Hello, this is a test of the text-to-speech system. The voice cloning platform is working correctly."
+        
+        job_id = await tts_service.generate_speech(
+            user_id=str(current_user.id),
+            voice_model_id=str(test_model.id),
+            text=test_text,
+            output_format="mp3",
+            voice_settings={
+                "stability": 0.5,
+                "similarity_boost": 0.8
+            }
+        )
+        
+        return {
+            "message": "Test TTS generation started",
+            "job_id": job_id,
+            "test_text": test_text,
+            "voice_model": {
+                "id": str(test_model.id),
+                "name": test_model.name,
+                "model_type": test_model.model_type
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to start test generation"
+        )

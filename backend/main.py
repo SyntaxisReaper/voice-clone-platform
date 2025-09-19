@@ -8,7 +8,9 @@ from loguru import logger
 from app.core.config import settings
 from app.core.database import engine
 from app.models.base import Base
-from app.api.routes import auth, voice, dashboard, licensing, tts, security
+from app.core.mongodb import init_database, close_database, mongodb
+from app.api.routes import auth, voice, dashboard, licensing, tts, security, training, uploads
+from app.api.routes import dashboard_enhanced, auth_enhanced
 
 
 @asynccontextmanager
@@ -16,12 +18,28 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     logger.info("Starting Voice Clone Platform API")
     
-    # Create database tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Create database tables (SQLAlchemy)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("SQLAlchemy database initialized")
+    except Exception as e:
+        logger.warning(f"SQLAlchemy database initialization failed: {e}")
+    
+    # Initialize MongoDB connection
+    mongo_success = await init_database()
+    if mongo_success:
+        logger.info("MongoDB initialized successfully")
+        # Create test data in development
+        if settings.ENVIRONMENT == "development":
+            await mongodb.create_test_data()
+    else:
+        logger.error("MongoDB initialization failed")
     
     yield
     
+    # Cleanup
+    await close_database()
     logger.info("Shutting down Voice Clone Platform API")
 
 
@@ -63,10 +81,14 @@ async def health_check():
 
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(auth_enhanced.router, prefix="/api/auth/enhanced", tags=["Enhanced Authentication"])
 app.include_router(voice.router, prefix="/api/voice", tags=["Voice Management"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(dashboard_enhanced.router, prefix="/api/dashboard/enhanced", tags=["Enhanced Dashboard"])
 app.include_router(licensing.router, prefix="/api/licensing", tags=["Licensing"])
 app.include_router(tts.router, prefix="/api/tts", tags=["Text-to-Speech"])
+app.include_router(training.router, prefix="/api/training", tags=["Voice Training"])
+app.include_router(uploads.router, prefix="/api/uploads", tags=["File Uploads"])
 app.include_router(security.router, prefix="/api/security", tags=["Security"])
 
 

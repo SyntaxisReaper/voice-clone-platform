@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   MicrophoneIcon,
   SpeakerWaveIcon,
@@ -12,12 +13,27 @@ import {
   PauseIcon,
   ArrowDownTrayIcon,
   ShareIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  UserIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function Dashboard() {
   const [selectedVoice, setSelectedVoice] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const { user, signOut } = useAuth()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      router.push('/')
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
+  }
 
   // Mock data for voice samples
   const voiceSamples = [
@@ -58,9 +74,9 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -69,7 +85,7 @@ export default function Dashboard() {
               </Link>
               <Link href="/" className="flex items-center">
                 <SpeakerWaveIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary-600" />
-                <span className="ml-2 text-lg sm:text-xl font-bold text-gray-900">Dashboard</span>
+                <span className="ml-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Dashboard</span>
               </Link>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
@@ -80,6 +96,46 @@ export default function Dashboard() {
                 <PlusIcon className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">New Voice</span>
               </Link>
+              
+              {/* User Menu */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 p-2 rounded-md hover:bg-gray-100"
+                >
+                  {user?.photoURL ? (
+                    <img 
+                      src={user.photoURL} 
+                      alt={user.displayName || 'User'} 
+                      className="h-6 w-6 rounded-full"
+                    />
+                  ) : (
+                    <UserIcon className="h-6 w-6" />
+                  )}
+                  <span className="hidden sm:block text-sm font-medium">
+                    {user?.displayName || user?.email || 'User'}
+                  </span>
+                </button>
+                
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
+                    <Link
+                      href="/profile"
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <UserIcon className="h-4 w-4 mr-3" />
+                      View Profile
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <ArrowRightOnRectangleIcon className="h-4 w-4 mr-3" />
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -10,7 +10,7 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/react/24/outline'
 import Input from '../../components/common/Input'
-import { useAuth } from '../../hooks/useAuth'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -62,13 +62,12 @@ export default function LoginPage() {
       const result = await signInWithGoogle()
       
       if (result.success) {
-        console.log('Google sign-in successful:', result.user?.email)
         router.push('/dashboard')
       } else {
         setError(result.error || 'Google sign-in failed')
       }
-    } catch (err) {
-      setError('An unexpected error occurred')
+    } catch (err: any) {
+      setError('An unexpected error occurred during sign-in')
     } finally {
       setIsLoading(false)
     }

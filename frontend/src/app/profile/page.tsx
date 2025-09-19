@@ -52,11 +52,31 @@ interface UserStats {
 }
 
 export default function ProfilePage() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, loading } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'voices' | 'settings'>('overview')
   const [isPlaying, setIsPlaying] = useState<string | null>(null)
+  const [redirectTimeout, setRedirectTimeout] = useState<NodeJS.Timeout | null>(null)
+
+  // Handle authentication redirect with delay
+  useEffect(() => {
+    if (!loading && !user) {
+      const timeout = setTimeout(() => {
+        router.push('/login')
+      }, 2000) // Wait 2 seconds before redirecting
+      setRedirectTimeout(timeout)
+    } else if (user && redirectTimeout) {
+      clearTimeout(redirectTimeout)
+      setRedirectTimeout(null)
+    }
+    
+    return () => {
+      if (redirectTimeout) {
+        clearTimeout(redirectTimeout)
+      }
+    }
+  }, [user, loading, router, redirectTimeout])
 
   // Mock data - replace with real API calls
   const [userStats] = useState<UserStats>({
@@ -133,8 +153,22 @@ export default function ProfilePage() {
     }
   }
 
+  // Show loading state while checking authentication
+  if (loading || (!user && !redirectTimeout)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">
+            {loading ? 'Checking authentication...' : 'Redirecting to login...'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render profile if no user and redirect is pending
   if (!user) {
-    router.push('/login')
     return null
   }
 

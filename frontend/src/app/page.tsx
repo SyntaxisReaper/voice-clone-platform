@@ -64,18 +64,19 @@ export default function Home() {
               <Link href="/playground" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Playground
               </Link>
-              <Link href="/licensing" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Licensing
-              </Link>
-              <Link href="/help" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Help & Security
-              </Link>
               <Link href="/pricing" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Pricing
               </Link>
-              <Link href="/dashboard" className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                Get Started
-              </Link>
+              
+              {/* Auth Buttons */}
+              <div className="flex items-center space-x-2 ml-4 border-l border-gray-300 pl-4">
+                <Link href="/login" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Login
+                </Link>
+                <Link href="/signup" className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                  Sign Up
+                </Link>
+              </div>
             </div>
             
             {/* Mobile menu button */}
@@ -119,33 +120,30 @@ export default function Home() {
                   Playground
                 </Link>
                 <Link 
-                  href="/licensing" 
-                  className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Licensing
-                </Link>
-                <Link 
-                  href="/help" 
-                  className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Help & Security
-                </Link>
-                <Link 
                   href="/pricing" 
                   className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Pricing
                 </Link>
-                <Link 
-                  href="/dashboard" 
-                  className="bg-primary-600 hover:bg-primary-700 text-white block px-3 py-2 rounded-md text-base font-medium mt-4"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Get Started
-                </Link>
+                
+                {/* Auth Links - Mobile */}
+                <div className="border-t border-gray-200 pt-2 mt-4">
+                  <Link 
+                    href="/login" 
+                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link 
+                    href="/signup" 
+                    className="bg-primary-600 hover:bg-primary-700 text-white block px-3 py-2 rounded-md text-base font-medium mt-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </div>
               </div>
             </div>
           )}

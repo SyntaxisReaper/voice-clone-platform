@@ -12,6 +12,7 @@ __pycache__/
 .env.development.local
 .env.test.local
 .env.production.local
+.venv/
 
 # IDE
 .vscode/
@@ -48,6 +49,11 @@ pids
 models/
 audio_uploads/
 temp_audio/
+# Demo/runtime artifacts
+backend/voice_models/
+backend/audio_output/
+backend/training_data/
+audio_cache/
 
 # Database
 *.db

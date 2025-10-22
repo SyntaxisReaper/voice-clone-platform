@@ -1,293 +1,295 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import {
-  MicrophoneIcon,
-  SpeakerWaveIcon,
-  ChartBarIcon,
-  Cog6ToothIcon,
-  PlusIcon,
-  PlayIcon,
-  PauseIcon,
-  ArrowDownTrayIcon,
-  ShareIcon,
-  ArrowLeftIcon,
-  UserIcon,
-  ArrowRightOnRectangleIcon
-} from '@heroicons/react/24/outline'
-import { useAuth } from '@/hooks/useAuth'
+import { motion } from 'framer-motion'
+import { 
+  Mic, 
+  PlayCircle, 
+  BarChart3, 
+  Plus, 
+  Download, 
+  Eye,
+  TrendingUp,
+  Users,
+  Volume2,
+  Clock,
+  Star,
+  Zap,
+  Shield,
+  Calendar
+} from 'lucide-react'
 
-export default function Dashboard() {
-  const [selectedVoice, setSelectedVoice] = useState<string | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const { user, signOut } = useAuth()
-  const router = useRouter()
+export default function DashboardPage() {
+  const [selectedPeriod, setSelectedPeriod] = useState('7d')
 
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-      router.push('/')
-    } catch (error) {
-      console.error('Sign out error:', error)
-    }
-  }
-
-  // Mock data for voice samples
-  const voiceSamples = [
-    {
-      id: '1',
-      name: 'Professional Voice',
-      status: 'trained',
-      quality: 95,
-      usageCount: 1247,
-      lastUsed: '2 hours ago',
-      duration: '2:34'
+  // Mock data - replace with real API calls
+  const stats = [
+    { 
+      title: 'Total Voices', 
+      value: '12', 
+      change: '+2 this week',
+      icon: Mic,
+      color: 'from-berry-500 to-berry-600',
+      trend: 'up'
     },
-    {
-      id: '2',
-      name: 'Casual Narrator',
-      status: 'training',
-      quality: 0,
-      usageCount: 0,
-      lastUsed: 'Never',
-      duration: '1:45'
+    { 
+      title: 'Audio Generated', 
+      value: '1.2K', 
+      change: '+18% vs last week',
+      icon: Volume2,
+      color: 'from-twilight-500 to-twilight-600',
+      trend: 'up'
     },
-    {
-      id: '3',
-      name: 'Character Voice',
-      status: 'trained',
-      quality: 88,
-      usageCount: 523,
-      lastUsed: '1 day ago',
-      duration: '3:12'
+    { 
+      title: 'API Calls', 
+      value: '8.7K', 
+      change: '+24% vs last week',
+      icon: Zap,
+      color: 'from-berry-600 to-twilight-600',
+      trend: 'up'
+    },
+    { 
+      title: 'Revenue', 
+      value: '$342', 
+      change: '+12% vs last week',
+      icon: TrendingUp,
+      color: 'from-twilight-600 to-berry-500',
+      trend: 'up'
     }
   ]
 
-  const stats = [
-    { label: 'Total Voices', value: '12', icon: SpeakerWaveIcon, change: '+2' },
-    { label: 'Minutes Generated', value: '1,247', icon: ChartBarIcon, change: '+15%' },
-    { label: 'Active Training', value: '3', icon: MicrophoneIcon, change: '0' },
-    { label: 'Storage Used', value: '2.4GB', icon: Cog6ToothIcon, change: '+0.2GB' }
+  const recentVoices = [
+    { id: 1, name: 'Professional Narrator', status: 'Ready', createdAt: '2024-01-15', usage: 145 },
+    { id: 2, name: 'Casual Friend', status: 'Training', createdAt: '2024-01-14', usage: 89 },
+    { id: 3, name: 'News Anchor', status: 'Ready', createdAt: '2024-01-12', usage: 267 },
+    { id: 4, name: 'Character Voice', status: 'Ready', createdAt: '2024-01-10', usage: 156 }
+  ]
+
+  const recentActivity = [
+    { id: 1, action: 'Voice generated', voice: 'Professional Narrator', time: '2 hours ago', icon: Volume2 },
+    { id: 2, action: 'New voice created', voice: 'Casual Friend', time: '1 day ago', icon: Plus },
+    { id: 3, action: 'API key generated', voice: null, time: '2 days ago', icon: Shield },
+    { id: 4, action: 'License purchased', voice: 'News Anchor', time: '3 days ago', icon: Star }
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="mr-3 p-2 text-gray-600 hover:text-gray-900 md:hidden">
-                <ArrowLeftIcon className="h-5 w-5" />
-              </Link>
-              <Link href="/" className="flex items-center">
-                <SpeakerWaveIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary-600" />
-                <span className="ml-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Dashboard</span>
-              </Link>
+    <div className="min-h-screen pt-20 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-8"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-poppins font-bold text-navy mb-2">
+                Welcome back! 👋
+              </h1>
+              <p className="text-navy/70">
+                Here's what's happening with your voice clones today
+              </p>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            
+            <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+              <select 
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="input-glass px-4 py-2 text-sm"
+              >
+                <option value="1d">Last 24 hours</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="90d">Last 90 days</option>
+              </select>
+              
               <Link 
                 href="/training"
-                className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium flex items-center"
+                className="btn-primary px-4 py-2 text-sm inline-flex items-center space-x-2"
               >
-                <PlusIcon className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">New Voice</span>
+                <Plus className="w-4 h-4" />
+                <span>New Voice</span>
               </Link>
-              
-              {/* User Menu */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 p-2 rounded-md hover:bg-gray-100"
-                >
-                  {user?.photoURL ? (
-                    <img 
-                      src={user.photoURL} 
-                      alt={user.displayName || 'User'} 
-                      className="h-6 w-6 rounded-full"
-                    />
-                  ) : (
-                    <UserIcon className="h-6 w-6" />
-                  )}
-                  <span className="hidden sm:block text-sm font-medium">
-                    {user?.displayName || user?.email || 'User'}
-                  </span>
-                </button>
-                
-                {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
-                    <Link
-                      href="/profile"
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      <UserIcon className="h-4 w-4 mr-3" />
-                      View Profile
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      <ArrowRightOnRectangleIcon className="h-4 w-4 mr-3" />
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <stat.icon className="h-8 w-8 text-primary-600" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat, index) => {
+            const Icon = stat.icon
+            return (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 * index }}
+                className="glass-card p-6"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-navy/70 mb-1">{stat.title}</p>
+                    <p className="text-2xl font-bold text-navy mb-1">{stat.value}</p>
+                    <p className="text-xs text-green-600 flex items-center">
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                      {stat.change}
+                    </p>
+                  </div>
+                  <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-lg flex items-center justify-center`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">{stat.label}</dt>
-                    <dd className="flex items-baseline">
-                      <div className="text-2xl font-semibold text-gray-900">{stat.value}</div>
-                      <div className="ml-2 flex items-baseline text-sm">
-                        <div className={`${stat.change.startsWith('+') ? 'text-green-600' : 'text-gray-500'}`}>
-                          {stat.change}
-                        </div>
-                      </div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            )
+          })}
         </div>
 
-        {/* Voice Samples */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-medium text-gray-900">Your Voice Samples</h3>
-              <div className="flex space-x-2">
-                <button className="text-gray-400 hover:text-gray-600">
-                  <Cog6ToothIcon className="h-5 w-5" />
-                </button>
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Recent Voices */}
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="glass-card p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-navy">Your Voices</h2>
+                <Link href="/training" className="text-berry-600 hover:text-berry-700 text-sm font-medium">
+                  View All →
+                </Link>
               </div>
-            </div>
-
-            <div className="grid gap-4">
-              {voiceSamples.map((voice) => (
-                <div 
-                  key={voice.id} 
-                  className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md cursor-pointer ${
-                    selectedVoice === voice.id ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
-                  }`}
-                  onClick={() => setSelectedVoice(voice.id)}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+              
+              <div className="space-y-4">
+                {recentVoices.map((voice, index) => (
+                  <motion.div
+                    key={voice.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 * index }}
+                    className="flex items-center justify-between p-4 hover:bg-white/20 rounded-lg transition-colors"
+                  >
                     <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center">
-                          <SpeakerWaveIcon className="h-6 w-6 text-white" />
-                        </div>
+                      <div className="w-10 h-10 bg-gradient-to-br from-berry-500 to-twilight-500 rounded-lg flex items-center justify-center">
+                        <Mic className="w-5 h-5 text-white" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-gray-900 truncate">{voice.name}</h4>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm text-gray-500">
-                          <span className="flex items-center">
-                            <span className={`inline-block w-2 h-2 rounded-full mr-1 ${
-                              voice.status === 'trained' ? 'bg-green-400' : 
-                              voice.status === 'training' ? 'bg-yellow-400' : 'bg-gray-400'
-                            }`}></span>
-                            {voice.status === 'trained' ? 'Ready' : 'Training'}
-                          </span>
-                          <span className="hidden sm:inline">Duration: {voice.duration}</span>
-                          {voice.quality > 0 && <span className="hidden sm:inline">Quality: {voice.quality}%</span>}
-                        </div>
+                      <div>
+                        <h3 className="font-medium text-navy">{voice.name}</h3>
+                        <p className="text-sm text-navy/60">
+                          Created {voice.createdAt} • {voice.usage} uses
+                        </p>
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
-                      <div className="text-left sm:text-right text-sm">
-                        <div className="text-gray-900 font-medium">{voice.usageCount} uses</div>
-                        <div className="text-gray-500 text-xs sm:text-sm">Last: {voice.lastUsed}</div>
-                      </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        voice.status === 'Ready' 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {voice.status}
+                      </span>
                       
                       <div className="flex space-x-1">
-                        <button 
-                          className="p-2 text-gray-400 hover:text-gray-600 rounded-md"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setIsPlaying(!isPlaying)
-                          }}
-                        >
-                          {isPlaying ? (
-                            <PauseIcon className="h-4 w-4" />
-                          ) : (
-                            <PlayIcon className="h-4 w-4" />
-                          )}
+                        <button className="p-1 hover:bg-white/20 rounded">
+                          <PlayCircle className="w-4 h-4 text-navy/70" />
                         </button>
-                        <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md">
-                          <ShareIcon className="h-4 w-4" />
+                        <button className="p-1 hover:bg-white/20 rounded">
+                          <Eye className="w-4 h-4 text-navy/70" />
                         </button>
-                        <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md">
-                          <ArrowDownTrayIcon className="h-4 w-4" />
+                        <button className="p-1 hover:bg-white/20 rounded">
+                          <Download className="w-4 h-4 text-navy/70" />
                         </button>
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="mt-8 bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
-            <div className="flow-root">
-              <ul className="-mb-8">
-                {[
-                  { action: 'Voice clone generated', target: 'Professional Voice', time: '2 hours ago', type: 'generation' },
-                  { action: 'Training completed', target: 'Character Voice', time: '1 day ago', type: 'training' },
-                  { action: 'New voice sample uploaded', target: 'Casual Narrator', time: '2 days ago', type: 'upload' }
-                ].map((activity, index) => (
-                  <li key={index}>
-                    <div className="relative pb-8">
-                      {index !== 2 && (
-                        <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" />
-                      )}
-                      <div className="relative flex space-x-3">
-                        <div>
-                          <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${
-                            activity.type === 'generation' ? 'bg-green-500' :
-                            activity.type === 'training' ? 'bg-blue-500' : 'bg-purple-500'
-                          }`}>
-                            <SpeakerWaveIcon className="h-4 w-4 text-white" />
-                          </span>
-                        </div>
-                        <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                          <div>
-                            <p className="text-sm text-gray-500">
-                              {activity.action} <span className="font-medium text-gray-900">{activity.target}</span>
-                            </p>
-                          </div>
-                          <div className="text-right text-sm whitespace-nowrap text-gray-500">
-                            {activity.time}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
+                  </motion.div>
                 ))}
-              </ul>
-            </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="glass-card p-6"
+            >
+              <h2 className="text-xl font-semibold text-navy mb-4">Quick Actions</h2>
+              <div className="space-y-3">
+                <Link 
+                  href="/training"
+                  className="flex items-center space-x-3 p-3 hover:bg-white/20 rounded-lg transition-colors group"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-berry-500 to-berry-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Plus className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="font-medium text-navy">Create New Voice</span>
+                </Link>
+                
+                <Link 
+                  href="/playground"
+                  className="flex items-center space-x-3 p-3 hover:bg-white/20 rounded-lg transition-colors group"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-twilight-500 to-twilight-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <PlayCircle className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="font-medium text-navy">Try Playground</span>
+                </Link>
+                
+                <Link 
+                  href="/billing"
+                  className="flex items-center space-x-3 p-3 hover:bg-white/20 rounded-lg transition-colors group"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-berry-600 to-twilight-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <BarChart3 className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="font-medium text-navy">View Analytics</span>
+                </Link>
+              </div>
+            </motion.div>
+
+            {/* Recent Activity */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="glass-card p-6"
+            >
+              <h2 className="text-xl font-semibold text-navy mb-4">Recent Activity</h2>
+              <div className="space-y-4">
+                {recentActivity.map((activity, index) => {
+                  const Icon = activity.icon
+                  return (
+                    <motion.div
+                      key={activity.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.1 * index }}
+                      className="flex items-start space-x-3"
+                    >
+                      <div className="w-8 h-8 bg-gradient-to-br from-berry-500/20 to-twilight-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4 text-berry-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm text-navy">
+                          <span className="font-medium">{activity.action}</span>
+                          {activity.voice && (
+                            <span className="text-navy/70"> for {activity.voice}</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-navy/60 mt-1">{activity.time}</p>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>

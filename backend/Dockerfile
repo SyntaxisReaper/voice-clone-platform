@@ -1,44 +1,33 @@
-FROM python:3.11-slim
+# Backend Dockerfile optimized for XTTS zero-shot cloning
+# Uses Python 3.10 for better compatibility with Coqui TTS
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+FROM python:3.10-slim AS base
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    make \
-    libc6-dev \
-    libffi-dev \
-    libssl-dev \
-    libasound2-dev \
-    libsndfile1-dev \
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+# System deps for audio/TTS builds
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
     ffmpeg \
-    espeak-ng \
+    libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Set work directory
 WORKDIR /app
 
-# Copy requirements file
-COPY requirements.txt ./
+# Copy backend sources
+COPY . /app
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install minimal dependencies for XTTS zero-shot cloning
+# This avoids platform-specific packages from the full requirements.txt
+COPY requirements-xtts.txt /app/requirements-xtts.txt
+RUN python -m pip install --upgrade pip \
+    && python -m pip install -r /app/requirements-xtts.txt
 
-# Copy project
-COPY . .
-
-# Create necessary directories
-RUN mkdir -p /app/models /app/audio /app/uploads
-
-# Expose port
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+# Run the demo server that includes /api/tts/clone
+CMD ["python", "-m", "uvicorn", "vcaas_server:app", "--host", "0.0.0.0", "--port", "8000"]
 
-# Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

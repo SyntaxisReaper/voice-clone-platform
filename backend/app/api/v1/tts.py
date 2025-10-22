@@ -1,64 +1,140 @@
 """
-Text-to-Speech API Endpoints
-
-Provides REST API for TTS generation operations.
+Text-to-Speech synthesis endpoints for VCaaS API v1.
+Handles speech generation with watermarking and usage tracking.
 """
 
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, File, Form
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+from typing import Optional, Dict, Any
+import uuid
+from datetime import datetime
 import os
 
-from app.core.auth import get_current_user
-from app.models.mongo.user import User
-from app.models.mongo.voice_model import VoiceModel
-from app.services.tts_service import tts_service
+from ...core.database import get_db
+from ...services.tts_service import tts_service, TTSService
+from ...core.watermark import WatermarkService
+from ...services.license_service import LicenseService
+from ...models.user import User
+from ...models.voice import Voice
+from ...models.usage_log import UsageLog
+from .auth import get_current_user
+from ...services.xtts_zero_shot import ZeroShotXTTS
+from ...services.xtts_finetuned import FinetunedXTTS
+from ...schemas.tts import (
+    SynthesizeRequest,
+    SynthesizeResponse,
+    TTSJobResponse,
+    TTSResponse,
+    TTSRequest,
+    TTSResultResponse,
+    VoiceParams
+)
 
-router = APIRouter()
-
-
-class TTSRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=10000)
-    voice_model_id: str = Field(...)
-    output_format: str = Field(default="mp3", pattern="^(mp3|wav|ogg)$")
-    voice_settings: Optional[Dict[str, Any]] = None
-
-
-class TTSResponse(BaseModel):
-    job_id: str
-    message: str = "TTS generation started successfully"
-    estimated_duration: float
-    estimated_cost: float
-
-
-class TTSJobResponse(BaseModel):
-    job_id: str
-    status: str
-    progress: float
-    text: str
-    voice_model_id: str
-    output_format: str
-    created_at: str
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
-    estimated_duration: Optional[float] = None
-    actual_duration: Optional[float] = None
-    estimated_cost: Optional[float] = None
-    actual_cost: Optional[float] = None
-    quality_score: Optional[float] = None
-    error_message: Optional[str] = None
+router = APIRouter(prefix="/tts", tags=["text-to-speech"])
 
 
-class TTSResultResponse(BaseModel):
-    job_id: str
-    status: str
-    output_file: str
-    duration: Optional[float] = None
-    file_size_mb: Optional[float] = None
-    quality_score: Optional[float] = None
-    created_at: str
-    completed_at: Optional[str] = None
+@router.post("/synthesize", response_model=SynthesizeResponse)
+async def synthesize_speech(
+    request: SynthesizeRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate speech from text using a cloned voice."""
+    
+    # Verify voice exists and belongs to user
+    voice = db.query(Voice).filter(
+        Voice.id == request.voice_id,
+        Voice.user_id == current_user.id
+    ).first()
+    
+    if not voice:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Voice not found"
+        )
+    
+    if voice.status != 'ready':
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Voice is not ready for synthesis"
+        )
+    
+    # Validate license token if provided
+    license_service = LicenseService(db)
+    license_info = None
+    
+    if request.license_token:
+        license_info = await license_service.validate_license_token(
+            request.license_token,
+            voice_id=request.voice_id
+        )
+        if not license_info:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid or expired license token"
+            )
+    
+    try:
+        # Use shared TTS service
+        # Generate unique job ID
+        job_id = f"tts_{uuid.uuid4().hex[:12]}"
+        
+        # Prepare voice parameters
+        voice_params = VoiceParams(
+            speed=request.voice_params.speed if request.voice_params else 1.0,
+            pitch=request.voice_params.pitch if request.voice_params else 0.0,
+            emotion=request.voice_params.emotion if request.voice_params else "neutral"
+        )
+        
+        # Generate speech
+        audio_path = await tts_service.synthesize_text(
+            text=request.text,
+            voice_id=request.voice_id,
+            speaker_embedding=voice.speaker_embedding,
+            voice_params=voice_params,
+            job_id=job_id
+        )
+        
+        # Apply watermarking
+        watermark_service = WatermarkService()
+        watermark_id = f"wm_{uuid.uuid4().hex[:16]}"
+        
+        watermarked_audio_path = await watermark_service.embed_watermark(
+            audio_path=audio_path,
+            watermark_id=watermark_id,
+            license_id=license_info['license_id'] if license_info else None,
+            voice_id=request.voice_id,
+            method='robust'
+        )
+        
+        # Log usage in background
+        background_tasks.add_task(
+            log_usage,
+            db=db,
+            user_id=current_user.id,
+            voice_id=request.voice_id,
+            text_length=len(request.text),
+            audio_duration=0,  # Will be calculated in background
+            watermark_id=watermark_id,
+            license_id=license_info['license_id'] if license_info else None
+        )
+        
+        return SynthesizeResponse(
+            job_id=job_id,
+            audio_url=f"/api/v1/tts/download/{job_id}",
+            watermark_id=watermark_id,
+            license_id=license_info['license_id'] if license_info else None,
+            status="completed",
+            created_at=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Speech synthesis failed: {str(e)}"
+        )
 
 
 @router.post("/generate", response_model=TTSResponse)
@@ -257,6 +333,79 @@ async def download_tts_audio(
         )
 
 
+@router.post("/clone")
+async def clone_speech(
+    text: str = Form(...),
+    language: str = Form("en"),
+    reference: UploadFile = File(...),
+    model_dir: Optional[str] = Form(None),
+):
+    """Zero-shot cloning via XTTS v2. Returns generated audio file."""
+    # Basic validations
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Text cannot be empty")
+    if reference.size is not None and reference.size > 20 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Reference audio too large (max 20MB)")
+    if not reference.filename.lower().endswith((".wav", ".mp3", ".m4a", ".flac")):
+        raise HTTPException(status_code=415, detail="Unsupported file type (wav/mp3/m4a/flac)")
+
+    # Save reference to temp
+    import tempfile
+    try:
+        with tempfile.NamedTemporaryFile(suffix=os.path.splitext(reference.filename)[1], delete=False) as tmp:
+            ref_path = tmp.name
+            tmp.write(await reference.read())
+
+        # Use fine-tuned model if provided; else zero-shot
+        if model_dir and os.path.isdir(model_dir):
+            try:
+                fxtts = FinetunedXTTS(model_dir)
+                audio_bytes = fxtts.synthesize(text=text, speaker_wav_path=ref_path, language=language)
+            except Exception:
+                xtts = ZeroShotXTTS.instance()
+                audio_bytes = xtts.synthesize(text=text, speaker_wav_path=ref_path, language=language)
+        else:
+            xtts = ZeroShotXTTS.instance()
+            audio_bytes = xtts.synthesize(text=text, speaker_wav_path=ref_path, language=language)
+
+        # Write output wav
+        out_dir = os.path.join("data", "tts_outputs")
+        os.makedirs(out_dir, exist_ok=True)
+        job_id = f"xtts_{uuid.uuid4().hex[:12]}"
+        out_path = os.path.join(out_dir, f"{job_id}.wav")
+        with open(out_path, "wb") as f:
+            f.write(audio_bytes)
+
+        # Optional watermark embed (robust)
+        try:
+            wm = WatermarkService()
+            out_path = await wm.embed_watermark(out_path, watermark_id=f"wm_{job_id}")
+        except Exception:
+            pass
+
+        return FileResponse(out_path, media_type="audio/wav", filename=os.path.basename(out_path))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        try:
+            if 'ref_path' in locals() and os.path.exists(ref_path):
+                os.unlink(ref_path)
+        except Exception:
+            pass
+
+
+@router.post("/clone/warmup")
+async def clone_warmup():
+    """Preload XTTS model to avoid first-request latency."""
+    try:
+        ZeroShotXTTS.instance().load()
+        return {"status": "ready"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/jobs")
 async def list_tts_jobs(
     status_filter: Optional[str] = None,
@@ -287,125 +436,77 @@ async def list_tts_jobs(
 async def get_available_voice_models(
     current_user: User = Depends(get_current_user)
 ):
-    """Get voice models available for TTS generation"""
+    """Return user's voices as available models (SQL-backed)."""
     try:
-        # Get user's private models
-        user_models = await VoiceModel.find({
-            "user_id": str(current_user.id),
-            "status": "completed",
-            "deployment_status": "deployed"
-        }).sort("-created_at").to_list()
-        
-        # Get public models
-        public_models = await VoiceModel.find({
-            "is_public": True,
-            "status": "completed",
-            "deployment_status": "deployed"
-        }).sort("-created_at").limit(50).to_list()
-        
-        # Format models for response
-        available_models = []
-        
-        # Add user's private models
-        for model in user_models:
-            available_models.append({
-                "id": str(model.id),
-                "name": model.name,
-                "description": model.description,
-                "model_type": model.model_type,
-                "quality_score": model.quality_score,
-                "similarity_score": model.similarity_score,
-                "naturalness_score": model.naturalness_score,
-                "supported_languages": model.supported_languages,
-                "is_public": model.is_public,
-                "is_owned": True,
-                "created_at": model.created_at.isoformat()
-            })
-        
-        # Add public models
-        for model in public_models:
-            available_models.append({
-                "id": str(model.id),
-                "name": model.name,
-                "description": model.description,
-                "model_type": model.model_type,
-                "quality_score": model.quality_score,
-                "similarity_score": model.similarity_score,
-                "naturalness_score": model.naturalness_score,
-                "supported_languages": model.supported_languages,
-                "is_public": model.is_public,
-                "is_owned": False,
-                "created_at": model.created_at.isoformat()
-            })
-        
-        return {
-            "models": available_models,
-            "total": len(available_models)
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get available voice models"
+        # List voices belonging to the user as available "models"
+        voices = (
+            db.query(Voice)  # type: ignore[name-defined]
+            .filter(Voice.user_id == current_user.id)
+            .all()
         )
+        available = [
+            {
+                "id": v.id,
+                "name": v.name,
+                "description": v.description,
+                "model_type": "voice_clip",
+                "quality_score": v.quality_score,
+                "supported_languages": ["en"],
+                "is_public": False,
+                "is_owned": True,
+                "created_at": v.created_at.isoformat() if v.created_at else None,
+            }
+            for v in voices
+        ]
+        return {"models": available, "total": len(available)}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to get available voice models")
 
 
 @router.get("/models/{model_id}/info")
 async def get_voice_model_info(
     model_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Get detailed information about a voice model"""
+    """Return info for a user's Voice row as model info."""
     try:
-        model = await VoiceModel.get(model_id)
-        
-        if not model:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Voice model not found"
-            )
-        
-        # Check access permissions
-        if not model.is_public and model.user_id != str(current_user.id):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied to this voice model"
-            )
-        
-        # Return detailed model information
+        v = (
+            db.query(Voice)
+            .filter(Voice.id == model_id, Voice.user_id == current_user.id)
+            .first()
+        )
+        if not v:
+            raise HTTPException(status_code=404, detail="Voice not found")
         return {
-            "id": str(model.id),
-            "name": model.name,
-            "description": model.description,
-            "model_type": model.model_type,
-            "model_version": model.model_version,
-            "architecture": model.architecture,
-            "quality_score": model.quality_score,
-            "similarity_score": model.similarity_score,
-            "naturalness_score": model.naturalness_score,
-            "supported_languages": model.supported_languages,
-            "sample_count": model.sample_count,
-            "training_duration_minutes": model.training_duration_minutes,
-            "model_size_mb": model.model_size_mb,
-            "is_public": model.is_public,
-            "is_owned": model.user_id == str(current_user.id),
-            "status": model.status,
-            "deployment_status": model.deployment_status,
-            "created_at": model.created_at.isoformat(),
-            "training_completed_at": model.training_completed_at.isoformat() if model.training_completed_at else None,
-            "deployed_at": model.deployed_at.isoformat() if model.deployed_at else None,
-            "usage_count": model.usage_count,
-            "total_generation_time": model.total_generation_time,
-            "tags": model.tags
+            "id": v.id,
+            "name": v.name,
+            "description": v.description,
+            "model_type": "voice_clip",
+            "model_version": None,
+            "architecture": None,
+            "quality_score": v.quality_score,
+            "similarity_score": None,
+            "naturalness_score": None,
+            "supported_languages": ["en"],
+            "sample_count": 1,
+            "training_duration_minutes": 0,
+            "model_size_mb": (v.file_size or 0) / (1024 * 1024),
+            "is_public": False,
+            "is_owned": True,
+            "status": v.status,
+            "deployment_status": "deployed" if v.status == "ready" else v.status,
+            "created_at": v.created_at.isoformat() if v.created_at else None,
+            "training_completed_at": None,
+            "deployed_at": v.updated_at.isoformat() if v.updated_at else None,
+            "usage_count": 0,
+            "total_generation_time": 0,
+            "tags": [],
         }
-        
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get voice model information"
-        )
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to get voice model information")
 
 
 @router.get("/stats")
@@ -445,53 +546,18 @@ async def get_tts_stats(
 async def test_tts_generation(
     current_user: User = Depends(get_current_user)
 ):
-    """Test TTS generation with a sample text and voice"""
+    """Smoke-test TTS with a synthetic job."""
     try:
-        # Find a suitable voice model for testing
-        test_model = await VoiceModel.find_one({
-            "$or": [
-                {"user_id": str(current_user.id)},
-                {"is_public": True}
-            ],
-            "status": "completed",
-            "deployment_status": "deployed"
-        })
-        
-        if not test_model:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No voice models available for testing"
-            )
-        
-        # Generate test speech
-        test_text = "Hello, this is a test of the text-to-speech system. The voice cloning platform is working correctly."
-        
+        test_text = "Hello, this is a test of the text-to-speech system."
         job_id = await tts_service.generate_speech(
             user_id=str(current_user.id),
-            voice_model_id=str(test_model.id),
+            voice_model_id="default",
             text=test_text,
-            output_format="mp3",
-            voice_settings={
-                "stability": 0.5,
-                "similarity_boost": 0.8
-            }
+            output_format="wav",
+            voice_settings={}
         )
-        
-        return {
-            "message": "Test TTS generation started",
-            "job_id": job_id,
-            "test_text": test_text,
-            "voice_model": {
-                "id": str(test_model.id),
-                "name": test_model.name,
-                "model_type": test_model.model_type
-            }
-        }
-        
+        return {"message": "Test TTS started", "job_id": job_id, "test_text": test_text}
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to start test generation"
-        )
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to start test generation")

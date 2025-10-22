@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from sqlalchemy import select, update, delete
+import uuid
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +8,8 @@ from typing import List, Optional
 from datetime import datetime
 
 from app.core.database import get_db
+from app.core.firebase_auth import get_current_user
+from app.models.voice_sample import VoiceSample
 
 router = APIRouter()
 security = HTTPBearer()
@@ -41,14 +45,20 @@ class VoiceSampleUpdate(BaseModel):
 
 @router.get("/samples", response_model=List[VoiceSampleResponse])
 async def get_voice_samples(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     limit: int = 50,
     offset: int = 0
 ):
     """Get user's voice samples"""
-    # TODO: Verify JWT token and get user
-    # TODO: Query voice samples from database
+    result = await db.execute(
+        select(VoiceSample)
+        .where(VoiceSample.owner_id == user.get("uid"))
+        .offset(offset)
+        .limit(limit)
+    )
+    samples = result.scalars().all()
+    return samples
     
     # Mock response for now
     return [
@@ -80,12 +90,23 @@ async def get_voice_samples(
 @router.post("/samples", response_model=VoiceSampleResponse)
 async def create_voice_sample(
     voice_data: VoiceSampleCreate,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new voice sample"""
-    # TODO: Verify JWT token and get user
-    # TODO: Create voice sample in database
+    sample = VoiceSample(
+        id=str(uuid.uuid4()),
+        owner_id=user.get("uid"),
+        name=voice_data.name,
+        description=voice_data.description,
+        status="uploaded",
+        duration=0.0,
+        is_public=voice_data.is_public,
+    )
+    db.add(sample)
+    await db.commit()
+    await db.refresh(sample)
+    return sample
     
     # Mock response for now
     return {
@@ -105,11 +126,10 @@ async def create_voice_sample(
 async def upload_voice_file(
     sample_id: str,
     file: UploadFile = File(...),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Upload audio file for voice sample"""
-    # TODO: Verify JWT token and get user
     # TODO: Validate audio file format
     # TODO: Save file to S3 or local storage
     # TODO: Start processing/training pipeline
@@ -125,12 +145,17 @@ async def upload_voice_file(
 @router.get("/samples/{sample_id}", response_model=VoiceSampleResponse)
 async def get_voice_sample(
     sample_id: str,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get specific voice sample"""
-    # TODO: Verify JWT token and get user
-    # TODO: Get voice sample from database
+    result = await db.execute(select(VoiceSample).where(VoiceSample.id == sample_id))
+    sample = result.scalar_one_or_none()
+    if not sample:
+        raise HTTPException(status_code=404, detail="Voice sample not found")
+    if sample.owner_id != user.get("uid") and not sample.is_public:
+        raise HTTPException(status_code=403, detail="Not authorized to access this sample")
+    return sample
     # TODO: Check user permissions
     
     # Mock response for now
@@ -151,12 +176,27 @@ async def get_voice_sample(
 async def update_voice_sample(
     sample_id: str,
     voice_data: VoiceSampleUpdate,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update voice sample"""
-    # TODO: Verify JWT token and get user
-    # TODO: Update voice sample in database
+    result = await db.execute(select(VoiceSample).where(VoiceSample.id == sample_id))
+    sample = result.scalar_one_or_none()
+    if not sample:
+        raise HTTPException(status_code=404, detail="Voice sample not found")
+    if sample.owner_id != user.get("uid"):
+        raise HTTPException(status_code=403, detail="Not authorized to update this sample")
+
+    if voice_data.name is not None:
+        sample.name = voice_data.name
+    if voice_data.description is not None:
+        sample.description = voice_data.description
+    if voice_data.is_public is not None:
+        sample.is_public = voice_data.is_public
+
+    await db.commit()
+    await db.refresh(sample)
+    return sample
     # TODO: Check user permissions
     
     # Mock response for now
@@ -176,12 +216,20 @@ async def update_voice_sample(
 @router.delete("/samples/{sample_id}")
 async def delete_voice_sample(
     sample_id: str,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete voice sample"""
-    # TODO: Verify JWT token and get user
-    # TODO: Check user permissions
+    result = await db.execute(select(VoiceSample).where(VoiceSample.id == sample_id))
+    sample = result.scalar_one_or_none()
+    if not sample:
+        raise HTTPException(status_code=404, detail="Voice sample not found")
+    if sample.owner_id != user.get("uid"):
+        raise HTTPException(status_code=403, detail="Not authorized to delete this sample")
+
+    await db.delete(sample)
+    await db.commit()
+    return {"message": "Voice sample deleted successfully"}
     # TODO: Delete from database and storage
     
     return {"message": "Voice sample deleted successfully"}
@@ -190,12 +238,11 @@ async def delete_voice_sample(
 @router.post("/samples/{sample_id}/train")
 async def train_voice_sample(
     sample_id: str,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Start training for voice sample"""
-    # TODO: Verify JWT token and get user
-    # TODO: Start background training task
+    # TODO: Start background training task for user's sample
     # TODO: Update sample status
     
     return {

@@ -2,32 +2,33 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { submitSecurityReport, SecurityReportData } from '@/lib/api'
-import { useToast, ToastContainer } from '@/components/ui/Toast'
+import { motion } from 'framer-motion'
+// import { submitSecurityReport, SecurityReportData } from '@/lib/api'
+// import { useToast, ToastContainer } from '@/components/ui/Toast'
 import {
-  ShieldCheckIcon,
-  ExclamationTriangleIcon,
-  LockClosedIcon,
-  EyeIcon,
-  DocumentTextIcon,
-  ChatBubbleLeftRightIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  GlobeAltIcon,
-  InformationCircleIcon,
-  CheckCircleIcon,
-  XMarkIcon,
-  ChevronRightIcon,
-  ChevronDownIcon,
-  BugAntIcon,
-  CpuChipIcon,
-  SpeakerWaveIcon,
-  ArrowLeftIcon
-} from '@heroicons/react/24/outline'
-import {
-  ShieldCheckIcon as ShieldCheckIconSolid,
-  ExclamationTriangleIcon as ExclamationTriangleIconSolid
-} from '@heroicons/react/24/solid'
+  Shield,
+  AlertTriangle,
+  Lock,
+  Eye,
+  FileText,
+  MessageSquare,
+  Phone,
+  Mail,
+  Globe,
+  Info,
+  CheckCircle,
+  X,
+  ChevronRight,
+  ChevronDown,
+  Bug,
+  Cpu,
+  Volume2,
+  ArrowLeft,
+  ShieldCheck,
+  Zap,
+  Download,
+  HelpCircle
+} from 'lucide-react'
 
 interface SecurityTip {
   id: string
@@ -65,7 +66,7 @@ export default function CyberHelpPage() {
     anonymous: false
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { toasts, dismissToast, showSuccess, showError } = useToast()
+  // const { toasts, dismissToast, showSuccess, showError } = useToast()
 
   // Mock data
   const securityTips: SecurityTip[] = [
@@ -75,7 +76,7 @@ export default function CyberHelpPage() {
       description: 'Always verify requests for voice samples through multiple channels before sharing access.',
       severity: 'high',
       category: 'voice',
-      icon: SpeakerWaveIcon
+      icon: Volume2
     },
     {
       id: 'tip-2',
@@ -83,7 +84,7 @@ export default function CyberHelpPage() {
       description: 'Add an extra layer of security to your account with 2FA to prevent unauthorized access.',
       severity: 'high',
       category: 'account',
-      icon: LockClosedIcon
+      icon: Lock
     },
     {
       id: 'tip-3',
@@ -91,7 +92,7 @@ export default function CyberHelpPage() {
       description: 'Review your voice usage logs frequently to detect any unauthorized generation activity.',
       severity: 'medium',
       category: 'voice',
-      icon: EyeIcon
+      icon: Eye
     },
     {
       id: 'tip-4',
@@ -99,7 +100,7 @@ export default function CyberHelpPage() {
       description: 'Always enable watermarking to track and identify your generated audio content.',
       severity: 'medium',
       category: 'voice',
-      icon: ShieldCheckIcon
+      icon: Shield
     },
     {
       id: 'tip-5',
@@ -107,7 +108,7 @@ export default function CyberHelpPage() {
       description: 'Carefully read and understand licensing terms before granting voice permissions.',
       severity: 'medium',
       category: 'privacy',
-      icon: DocumentTextIcon
+      icon: FileText
     },
     {
       id: 'tip-6',
@@ -115,7 +116,7 @@ export default function CyberHelpPage() {
       description: 'Regularly update your browser and operating system to patch security vulnerabilities.',
       severity: 'low',
       category: 'general',
-      icon: CpuChipIcon
+      icon: Cpu
     }
   ]
 
@@ -191,12 +192,12 @@ export default function CyberHelpPage() {
     switch (severity) {
       case 'critical':
       case 'high':
-        return ExclamationTriangleIconSolid
+        return AlertTriangle
       case 'warning':
       case 'medium':
-        return ExclamationTriangleIcon
+        return AlertTriangle
       default:
-        return InformationCircleIcon
+        return Info
     }
   }
 
@@ -264,159 +265,244 @@ export default function CyberHelpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <Link href="/dashboard" className="mr-3 p-2 text-gray-600 hover:text-gray-900 transition-colors">
-              <ArrowLeftIcon className="h-5 w-5" />
-            </Link>
-            <div>
-              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center">
-                <ShieldCheckIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary-600 mr-2" />
-                <span className="hidden sm:inline">Cyber Security </span>Help
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600">Security resources and threat information</p>
-            </div>
+    <div className="min-h-screen pt-20 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-8 flex items-center space-x-4"
+        >
+          <Link href="/dashboard" className="p-2 glass-button rounded-lg hover:bg-white/20 transition-colors">
+            <ArrowLeft className="h-5 w-5 text-navy" />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-poppins font-bold text-navy mb-2 flex items-center space-x-2">
+              <ShieldCheck className="h-8 w-8 text-berry-600" />
+              <span>Security Help 🔒</span>
+            </h1>
+            <p className="text-navy/70">
+              Comprehensive security resources and threat protection
+            </p>
           </div>
-        </div>
-      </div>
+        </motion.div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="glass-card p-2 mb-8 rounded-full"
+        >
+          <nav className="flex space-x-2">
             <button
               onClick={() => setActiveTab('security')}
-              className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+              className={`px-6 py-3 rounded-full font-medium text-sm transition-all ${
                 activeTab === 'security'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'bg-gradient-to-r from-berry-500 to-twilight-500 text-white shadow-lg'
+                  : 'text-navy/70 hover:text-navy hover:bg-white/30'
               }`}
             >
-              Security Tips
+              🛡️ Security Tips
             </button>
             <button
               onClick={() => setActiveTab('threats')}
-              className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+              className={`px-6 py-3 rounded-full font-medium text-sm transition-all ${
                 activeTab === 'threats'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'bg-gradient-to-r from-berry-500 to-twilight-500 text-white shadow-lg'
+                  : 'text-navy/70 hover:text-navy hover:bg-white/30'
               }`}
             >
-              Threat Alerts
+              ⚠️ Threats
             </button>
             <button
               onClick={() => setActiveTab('resources')}
-              className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+              className={`px-6 py-3 rounded-full font-medium text-sm transition-all ${
                 activeTab === 'resources'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'bg-gradient-to-r from-berry-500 to-twilight-500 text-white shadow-lg'
+                  : 'text-navy/70 hover:text-navy hover:bg-white/30'
               }`}
             >
-              <span className="hidden sm:inline">Resources & </span>FAQ
+              📚 Resources
             </button>
             <button
               onClick={() => setActiveTab('contact')}
-              className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+              className={`px-6 py-3 rounded-full font-medium text-sm transition-all ${
                 activeTab === 'contact'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'bg-gradient-to-r from-berry-500 to-twilight-500 text-white shadow-lg'
+                  : 'text-navy/70 hover:text-navy hover:bg-white/30'
               }`}
             >
-              <span className="hidden sm:inline">Report & </span>Contact
+              📧 Contact
             </button>
           </nav>
-        </div>
+        </motion.div>
 
         {/* Security Tips Tab */}
         {activeTab === 'security' && (
-          <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-6"
+          >
             {/* Security Overview */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-              <div className="flex items-center">
-                <ShieldCheckIconSolid className="h-8 w-8 mr-3" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="glass-card p-6 bg-gradient-to-r from-berry-500/10 to-twilight-500/10"
+            >
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-r from-berry-500 to-twilight-500 rounded-full flex items-center justify-center mr-4">
+                  <ShieldCheck className="h-6 w-6 text-white" />
+                </div>
                 <div>
-                  <h2 className="text-xl font-bold">Voice Security Status</h2>
-                  <p className="text-blue-100">Your account security is strong</p>
+                  <h2 className="text-2xl font-bold text-navy">Voice Security Status</h2>
+                  <p className="text-navy/70">Your account security is strong ✨</p>
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white/10 rounded-lg p-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="glass-card p-4 bg-green-50/30">
                   <div className="flex items-center">
-                    <CheckCircleIcon className="h-5 w-5 text-green-300 mr-2" />
-                    <span className="text-sm">2FA Enabled</span>
+                    <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                    <span className="font-medium text-navy">2FA Enabled</span>
                   </div>
                 </div>
-                <div className="bg-white/10 rounded-lg p-3">
+                <div className="glass-card p-4 bg-green-50/30">
                   <div className="flex items-center">
-                    <CheckCircleIcon className="h-5 w-5 text-green-300 mr-2" />
-                    <span className="text-sm">Watermarking Active</span>
+                    <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                    <span className="font-medium text-navy">Watermarking Active</span>
                   </div>
                 </div>
-                <div className="bg-white/10 rounded-lg p-3">
+                <div className="glass-card p-4 bg-yellow-50/30">
                   <div className="flex items-center">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-300 mr-2" />
-                    <span className="text-sm">1 Voice Public</span>
+                    <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
+                    <span className="font-medium text-navy">1 Voice Public</span>
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Security Tips Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {securityTips.map((tip) => (
-                <div key={tip.id} className={`border-l-4 rounded-lg p-6 bg-white shadow ${getSeverityColor(tip.severity)}`}>
-                  <div className="flex items-start">
-                    <tip.icon className="h-6 w-6 mr-3 mt-1 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-medium text-gray-900 mb-2">{tip.title}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{tip.description}</p>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(tip.severity)}`}>
-                          {tip.severity} priority
-                        </span>
-                        <span className="text-xs text-gray-500 capitalize">{tip.category}</span>
+              {securityTips.map((tip, index) => {
+                const Icon = tip.icon
+                return (
+                  <motion.div
+                    key={tip.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
+                    className={`glass-card p-6 hover:bg-white/40 transition-all cursor-pointer group`}
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        tip.severity === 'high' ? 'bg-red-100 text-red-600' :
+                        tip.severity === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+                        'bg-green-100 text-green-600'
+                      }`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-navy mb-2 group-hover:text-berry-600 transition-colors">
+                          {tip.title}
+                        </h3>
+                        <p className="text-sm text-navy/70 mb-3">{tip.description}</p>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            tip.severity === 'high' ? 'bg-red-100 text-red-800' :
+                            tip.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {tip.severity} priority
+                          </span>
+                          <span className="text-xs text-navy/50 capitalize bg-navy/10 px-2 py-1 rounded-full">
+                            {tip.category}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  </motion.div>
+                )
+              })}
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Security Actions</h3>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+              className="glass-card p-6"
+            >
+              <h3 className="text-lg font-semibold text-navy mb-6 flex items-center space-x-2">
+                <Zap className="w-5 h-5 text-berry-600" />
+                <span>Quick Security Actions</span>
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <button className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <ShieldCheckIcon className="h-5 w-5 text-primary-600 mr-3" />
-                  <span className="text-sm font-medium">Review Voice Permissions</span>
-                </button>
-                <button className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <EyeIcon className="h-5 w-5 text-primary-600 mr-3" />
-                  <span className="text-sm font-medium">Check Usage Logs</span>
-                </button>
-                <button className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <LockClosedIcon className="h-5 w-5 text-primary-600 mr-3" />
-                  <span className="text-sm font-medium">Update Password</span>
-                </button>
-                <button className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <BugAntIcon className="h-5 w-5 text-primary-600 mr-3" />
-                  <span className="text-sm font-medium">Report Issue</span>
+                <Link 
+                  href="/licensing" 
+                  className="flex items-center p-4 glass-card hover:bg-white/40 transition-all group rounded-lg"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-r from-berry-500/20 to-twilight-500/20 rounded-lg flex items-center justify-center mr-3">
+                    <Shield className="h-5 w-5 text-berry-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <span className="font-medium text-navy group-hover:text-berry-600 transition-colors">
+                    Voice Permissions
+                  </span>
+                </Link>
+                <Link 
+                  href="/dashboard" 
+                  className="flex items-center p-4 glass-card hover:bg-white/40 transition-all group rounded-lg"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-lg flex items-center justify-center mr-3">
+                    <Eye className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <span className="font-medium text-navy group-hover:text-blue-600 transition-colors">
+                    Usage Logs
+                  </span>
+                </Link>
+                <Link 
+                  href="#" 
+                  className="flex items-center p-4 glass-card hover:bg-white/40 transition-all group rounded-lg"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-lg flex items-center justify-center mr-3">
+                    <FileText className="h-5 w-5 text-green-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <span className="font-medium text-navy group-hover:text-green-600 transition-colors">
+                    Security Guide
+                  </span>
+                </Link>
+                <button className="flex items-center p-4 glass-card hover:bg-white/40 transition-all group rounded-lg">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-lg flex items-center justify-center mr-3">
+                    <Bug className="h-5 w-5 text-red-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <span className="font-medium text-navy group-hover:text-red-600 transition-colors">
+                    Report Issue
+                  </span>
                 </button>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
 
         {/* Threat Alerts Tab */}
         {activeTab === 'threats' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Current Threat Alerts</h3>
-                <p className="text-sm text-gray-500">Stay informed about security threats and updates</p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-6"
+          >
+            <div className="glass-card overflow-hidden">
+              <div className="p-6 border-b border-navy/10">
+                <h3 className="text-xl font-semibold text-navy flex items-center space-x-2">
+                  <AlertTriangle className="w-6 h-6 text-orange-600" />
+                  <span>Current Threat Alerts</span>
+                </h3>
+                <p className="text-navy/70 mt-1">Stay informed about security threats and updates</p>
               </div>
               <div className="divide-y divide-gray-200">
                 {threatAlerts.map((alert) => {
@@ -704,8 +790,7 @@ export default function CyberHelpPage() {
         )}
       </div>
       
-      {/* Toast Notifications */}
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      </div>
     </div>
   )
 }

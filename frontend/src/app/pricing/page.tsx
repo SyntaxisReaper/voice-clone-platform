@@ -6,305 +6,195 @@ import {
   CheckIcon,
   XMarkIcon,
   StarIcon,
+  SparklesIcon,
+  RocketLaunchIcon,
+  ArrowLeftIcon,
   CreditCardIcon,
-  BanknotesIcon,
-  DevicePhoneMobileIcon,
-  ArrowLeftIcon
+  GlobeAltIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline'
-import Header from '../../components/layout/Header'
+import { subscriptionPlans, formatPrice, calculateYearlySavings } from '@/lib/subscription'
 
-interface PricingPlan {
+interface PricingFeature {
   name: string
-  price: number
-  billing: 'monthly' | 'yearly'
-  popular?: boolean
-  description: string
-  features: string[]
-  limits: {
-    voiceClones: number
-    monthlyGeneration: string
-    audioQuality: string
-    supportLevel: string
-  }
-  buttonText: string
-  buttonStyle: string
+  starter: boolean | string
+  pro: boolean | string  
+  enterprise: boolean | string
 }
 
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
 
-  const plans: PricingPlan[] = [
+  const features: PricingFeature[] = [
     {
-      name: 'Free',
-      price: 0,
-      billing: billingCycle,
-      description: 'Perfect for trying out voice cloning',
-      features: [
-        'Up to 2 voice clones',
-        '10 minutes of audio generation per month',
-        'Basic audio quality (22kHz)',
-        'Community support',
-        'Watermarked audio',
-        'Personal use only'
-      ],
-      limits: {
-        voiceClones: 2,
-        monthlyGeneration: '10 minutes',
-        audioQuality: 'Basic (22kHz)',
-        supportLevel: 'Community'
-      },
-      buttonText: 'Get Started Free',
-      buttonStyle: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+      name: 'Voice Models',
+      starter: '3 models',
+      pro: '15 models',
+      enterprise: 'Unlimited'
     },
     {
-      name: 'Creator',
-      price: billingCycle === 'monthly' ? 29 : 290,
-      billing: billingCycle,
-      popular: true,
-      description: 'Ideal for content creators and small projects',
-      features: [
-        'Up to 10 voice clones',
-        '5 hours of audio generation per month',
-        'High audio quality (44kHz)',
-        'Priority email support',
-        'Optional watermarking',
-        'Commercial use allowed',
-        'Basic emotion control',
-        'Export in multiple formats'
-      ],
-      limits: {
-        voiceClones: 10,
-        monthlyGeneration: '5 hours',
-        audioQuality: 'High (44kHz)',
-        supportLevel: 'Priority Email'
-      },
-      buttonText: 'Start Creator Plan',
-      buttonStyle: 'bg-primary-600 text-white hover:bg-primary-700'
+      name: 'Monthly Minutes',
+      starter: '60 minutes',
+      pro: '500 minutes', 
+      enterprise: '2500 minutes'
     },
     {
-      name: 'Professional',
-      price: billingCycle === 'monthly' ? 99 : 990,
-      billing: billingCycle,
-      description: 'For businesses and professional voice actors',
-      features: [
-        'Up to 50 voice clones',
-        '20 hours of audio generation per month',
-        'Premium audio quality (48kHz)',
-        'Priority chat support',
-        'No watermarking',
-        'Full commercial rights',
-        'Advanced emotion control',
-        'Custom voice training',
-        'API access',
-        'Team collaboration tools'
-      ],
-      limits: {
-        voiceClones: 50,
-        monthlyGeneration: '20 hours',
-        audioQuality: 'Premium (48kHz)',
-        supportLevel: 'Priority Chat'
-      },
-      buttonText: 'Go Professional',
-      buttonStyle: 'bg-purple-600 text-white hover:bg-purple-700'
+      name: 'Voice Quality',
+      starter: 'Basic',
+      pro: 'High-quality',
+      enterprise: 'Premium'
     },
     {
-      name: 'Enterprise',
-      price: 299,
-      billing: billingCycle,
-      description: 'Custom solutions for large organizations',
-      features: [
-        'Unlimited voice clones',
-        'Unlimited audio generation',
-        'Studio quality (96kHz)',
-        'Dedicated account manager',
-        'White-label solution',
-        'Custom integrations',
-        'On-premise deployment option',
-        'Advanced security features',
-        'SLA guarantee',
-        'Custom voice models'
-      ],
-      limits: {
-        voiceClones: 999,
-        monthlyGeneration: 'Unlimited',
-        audioQuality: 'Studio (96kHz)',
-        supportLevel: 'Dedicated Manager'
-      },
-      buttonText: 'Contact Sales',
-      buttonStyle: 'bg-gradient-to-r from-pink-500 to-red-500 text-white hover:from-pink-600 hover:to-red-600'
+      name: 'Storage',
+      starter: '1GB',
+      pro: '10GB',
+      enterprise: '100GB'
+    },
+    {
+      name: 'API Access',
+      starter: false,
+      pro: true,
+      enterprise: true
+    },
+    {
+      name: 'Custom Voice Training',
+      starter: false,
+      pro: true,
+      enterprise: true
+    },
+    {
+      name: 'Priority Support',
+      starter: false,
+      pro: true,
+      enterprise: true
+    },
+    {
+      name: 'Advanced Analytics',
+      starter: false,
+      pro: false,
+      enterprise: true
+    },
+    {
+      name: 'White-label Options',
+      starter: false,
+      pro: false,
+      enterprise: true
+    },
+    {
+      name: 'Custom Integrations',
+      starter: false,
+      pro: false,
+      enterprise: true
+    },
+    {
+      name: 'Dedicated Support',
+      starter: false,
+      pro: false,
+      enterprise: '24/7 Support'
     }
   ]
 
-  const paymentMethods = [
-    {
-      id: 'card',
-      name: 'Credit/Debit Card',
-      icon: CreditCardIcon,
-      description: 'Visa, Mastercard, American Express',
-      popular: true
-    },
-    {
-      id: 'paypal',
-      name: 'PayPal',
-      icon: BanknotesIcon,
-      description: 'Pay with your PayPal account',
-      popular: true
-    },
-    {
-      id: 'upi',
-      name: 'UPI',
-      icon: DevicePhoneMobileIcon,
-      description: 'Google Pay, PhonePe, Paytm',
-      popular: false
-    },
-    {
-      id: 'netbanking',
-      name: 'Net Banking',
-      icon: BanknotesIcon,
-      description: 'All major Indian banks',
-      popular: false
-    },
-    {
-      id: 'wallet',
-      name: 'Digital Wallets',
-      icon: DevicePhoneMobileIcon,
-      description: 'Paytm, Amazon Pay, etc.',
-      popular: false
-    }
-  ]
+  const getPrice = (plan: any) => {
+    return billingCycle === 'yearly' ? plan.yearlyPrice : plan.price
+  }
 
-  const handleSelectPlan = (planName: string) => {
-    setSelectedPlan(planName)
-    if (planName !== 'Free') {
-      setShowPaymentModal(true)
+  const getPriceDisplay = (plan: any) => {
+    const price = getPrice(plan)
+    if (price === 0) return 'Free'
+    
+    if (billingCycle === 'yearly') {
+      return `$${price}/year`
+    }
+    return `$${price}/month`
+  }
+
+  const getSavings = (plan: any) => {
+    if (billingCycle === 'monthly' || plan.price === 0) return null
+    const savings = calculateYearlySavings(plan.price, plan.yearlyPrice)
+    if (savings <= 0) return null
+    return `Save $${savings}/year`
+  }
+
+  const renderFeatureValue = (value: boolean | string) => {
+    if (typeof value === 'boolean') {
+      return value ? (
+        <CheckIcon className="h-5 w-5 text-green-500" />
+      ) : (
+        <XMarkIcon className="h-5 w-5 text-gray-300" />
+      )
+    }
+    return <span className="text-sm text-gray-900 dark:text-gray-100">{value}</span>
+  }
+
+  const getButtonStyles = (plan: any) => {
+    if (plan.color === 'primary') {
+      return 'bg-primary-600 hover:bg-primary-700 text-white border-primary-600'
+    } else if (plan.color === 'accent') {
+      return 'bg-accent-600 hover:bg-accent-700 text-white border-accent-600'
+    } else {
+      return 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600'
     }
   }
 
-  const PaymentModal = () => (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-        <div className="mt-3">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Choose Payment Method</h3>
-            <button
-              onClick={() => setShowPaymentModal(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
-          </div>
-          
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-medium text-gray-900">{selectedPlan} Plan</h4>
-            <p className="text-2xl font-bold text-primary-600">
-              ${plans.find(p => p.name === selectedPlan)?.price}
-              <span className="text-sm text-gray-500">/{billingCycle}</span>
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {paymentMethods.map((method) => (
-              <div
-                key={method.id}
-                className="border rounded-lg p-4 hover:border-primary-500 cursor-pointer transition-colors"
-                onClick={() => {
-                  // Handle payment method selection
-                  console.log(`Selected ${method.name} for ${selectedPlan} plan`)
-                  alert(`Payment integration would be implemented here for ${method.name}`)
-                }}
-              >
-                <div className="flex items-center space-x-3">
-                  <method.icon className="h-6 w-6 text-gray-600" />
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h5 className="font-medium text-gray-900">{method.name}</h5>
-                      {method.popular && (
-                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          Popular
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-500">{method.description}</p>
-                  </div>
-                </div>
+  return (
+    <div className="min-h-screen">
+      {/* Header */}
+      <div className="glass gradient-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link href="/" className="mr-3 p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                <ArrowLeftIcon className="h-5 w-5" />
+              </Link>
+              <div className="flex items-center">
+                <CreditCardIcon className="h-8 w-8 text-primary-600 dark:text-primary-500" />
+                <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">Pricing</span>
               </div>
-            ))}
-          </div>
-
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              Secured by industry-standard encryption. Cancel anytime.
-            </p>
+            </div>
+            <Link 
+              href="/login"
+              className="btn-shine bg-gradient-to-r from-primary-600 via-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-md text-sm font-semibold shadow-md hover:opacity-95"
+            >
+              Get Started
+            </Link>
           </div>
         </div>
       </div>
-    </div>
-  )
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header 
-        title="Pricing Plans" 
-        subtitle="Choose the perfect plan for your voice cloning needs"
-        backLink="/dashboard"
-      />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Company Branding */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center items-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-red-500 rounded-full flex items-center justify-center">
-                <svg viewBox="0 0 100 100" className="w-8 h-8 text-white">
-                  <path 
-                    fill="currentColor" 
-                    d="M50 20c-8 0-15 5-18 12-2 4-1 8 1 12l15 25c1 2 3 3 5 3s4-1 5-3l15-25c2-4 3-8 1-12-3-7-10-12-18-12z"
-                  />
-                  <path 
-                    fill="currentColor" 
-                    opacity="0.7"
-                    d="M30 35c-3-2-7-3-10-1-5 3-7 9-4 14l10 15c1 2 3 3 5 2s3-3 2-5L23 45c-1-2 0-4 2-5s4 0 5 2l8 12c1 2 3 3 5 2s3-3 2-5L35 41c-2-3-3-5-5-6z"
-                  />
-                  <path 
-                    fill="currentColor" 
-                    opacity="0.7"
-                    d="M70 35c3-2 7-3 10-1 5 3 7 9 4 14l-10 15c-1 2-3 3-5 2s-3-3-2-5l10-15c1-2 0-4-2-5s-4 0-5 2l-8 12c-1 2-3 3-5 2s-3-3-2-5l10-15c2-3 3-5 5-6z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">VCAAS - Voice Cloning as a Service</h1>
-          <p className="text-lg text-gray-600 mt-2">Created by <span className="font-semibold text-primary-600">Ritesh Kumar Mishra</span></p>
-        </div>
-
-        {/* Billing Toggle */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-white p-1 rounded-lg shadow-sm border">
-            <div className="flex">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          <h1 className="typewriter text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-emerald-500 to-cyan-500 mb-6">
+            Choose Your Voice Plan
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+            From individuals to enterprises, we have the perfect plan to bring your voice cloning projects to life.
+          </p>
+          
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center mb-12">
+            <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
               <button
                 onClick={() => setBillingCycle('monthly')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
                   billingCycle === 'monthly'
-                    ? 'bg-primary-600 text-white'
-                    : 'text-gray-700 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setBillingCycle('yearly')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
                   billingCycle === 'yearly'
-                    ? 'bg-primary-600 text-white'
-                    : 'text-gray-700 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 Yearly
-                <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                  Save 20%
+                <span className="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-0.5 rounded-full">
+                  Save 17%
                 </span>
               </button>
             </div>
@@ -312,125 +202,222 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`bg-white rounded-lg shadow-lg overflow-hidden ${
-                plan.popular ? 'ring-2 ring-primary-600 relative' : ''
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute top-0 right-0 bg-primary-600 text-white px-3 py-1 text-xs font-medium rounded-bl-lg">
-                  <StarIcon className="w-3 h-3 inline mr-1" />
-                  Most Popular
-                </div>
-              )}
-              
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
-                <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
-                
-                <div className="mt-4">
-                  <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
-                  <span className="text-gray-600">/{billingCycle}</span>
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          {subscriptionPlans.map((plan, index) => {
+            const savings = getSavings(plan)
+            return (
+              <div
+                key={plan.id}
+                className={`relative glass gradient-border rounded-2xl transition-all duration-200 hover:shadow-xl ${
+                  plan.popular
+                    ? 'border-primary-500 dark:border-primary-400 scale-105'
+                    : 'border-gray-200 dark:border-gray-700'
+                }`}
+              >
+                {plan.badge && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-primary-600 dark:bg-primary-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center">
+                      <SparklesIcon className="h-4 w-4 mr-1" />
+                      {plan.badge}
+                    </div>
+                  </div>
+                )}
 
-                <button
-                  onClick={() => handleSelectPlan(plan.name)}
-                  className={`w-full mt-6 px-4 py-2 rounded-md text-sm font-medium transition-colors ${plan.buttonStyle}`}
-                >
-                  {plan.buttonText}
-                </button>
+                <div className="p-8">
+                  {/* Plan Header */}
+                  <div className="text-center mb-6">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                      {plan.name}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                      {plan.description}
+                    </p>
+                    
+                    {/* Price */}
+                    <div className="mb-4">
+                      <div className="flex items-baseline justify-center">
+                        <span className="text-5xl font-bold text-gray-900 dark:text-white">
+                          {getPrice(plan) === 0 ? 'Free' : `$${getPrice(plan)}`}
+                        </span>
+                        {getPrice(plan) > 0 && (
+                          <span className="text-gray-600 dark:text-gray-300 ml-1">
+                            /{billingCycle === 'yearly' ? 'year' : 'month'}
+                          </span>
+                        )}
+                      </div>
+                      {savings && (
+                        <div className="text-green-600 dark:text-green-400 text-sm font-medium mt-1">
+                          {savings}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-                <ul className="mt-6 space-y-3">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-gray-600">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                  {/* Features List */}
+                  <div className="space-y-4 mb-8">
+                    {plan.features.map((feature, featureIndex) => (
+                      <div key={featureIndex} className="flex items-center">
+                        <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
+                        <span className="ml-3 text-gray-700 dark:text-gray-300">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA Button */}
+                  <Link
+                    href={plan.price === 0 ? "/signup" : "/billing"}
+                    className={`w-full flex justify-center py-3 px-6 border-2 rounded-lg font-medium transition-colors ${getButtonStyles(plan)}`}
+                  >
+                    {plan.price === 0 ? 'Get Started Free' : `Start ${plan.name} Plan`}
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
-        {/* Feature Comparison */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Feature Comparison</h3>
+        {/* Feature Comparison Table */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+          <div className="px-8 py-6 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center">
+              Compare All Features
+            </h2>
           </div>
+          
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-6 py-4 text-left text-lg font-semibold text-gray-900 dark:text-white">
                     Features
                   </th>
-                  {plans.map((plan) => (
-                    <th key={plan.name} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {subscriptionPlans.map((plan) => (
+                    <th key={plan.id} className="px-6 py-4 text-center text-lg font-semibold text-gray-900 dark:text-white">
                       {plan.name}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">Voice Clones</td>
-                  {plans.map((plan) => (
-                    <td key={plan.name} className="px-6 py-4 text-sm text-gray-600 text-center">
-                      {plan.limits.voiceClones === 999 ? 'Unlimited' : plan.limits.voiceClones}
+              <tbody>
+                {features.map((feature, index) => (
+                  <tr key={feature.name} className={`${
+                    index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'
+                  } border-b border-gray-200 dark:border-gray-600`}>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                      {feature.name}
                     </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">Monthly Generation</td>
-                  {plans.map((plan) => (
-                    <td key={plan.name} className="px-6 py-4 text-sm text-gray-600 text-center">
-                      {plan.limits.monthlyGeneration}
+                    <td className="px-6 py-4 text-center">
+                      {renderFeatureValue(feature.starter)}
                     </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">Audio Quality</td>
-                  {plans.map((plan) => (
-                    <td key={plan.name} className="px-6 py-4 text-sm text-gray-600 text-center">
-                      {plan.limits.audioQuality}
+                    <td className="px-6 py-4 text-center">
+                      {renderFeatureValue(feature.pro)}
                     </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">Support Level</td>
-                  {plans.map((plan) => (
-                    <td key={plan.name} className="px-6 py-4 text-sm text-gray-600 text-center">
-                      {plan.limits.supportLevel}
+                    <td className="px-6 py-4 text-center">
+                      {renderFeatureValue(feature.enterprise)}
                     </td>
-                  ))}
-                </tr>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Footer Branding */}
-        <div className="text-center mt-12 pt-8 border-t border-gray-200">
-          <div className="flex justify-center items-center space-x-2 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <div className="w-6 h-6 bg-gradient-to-r from-purple-600 to-red-500 rounded-full"></div>
+        {/* Trust Section */}
+        <div className="mt-16 text-center">
+          <div className="flex flex-col md:flex-row items-center justify-center space-y-8 md:space-y-0 md:space-x-16">
+            <div className="flex items-center space-x-3">
+              <ShieldCheckIcon className="h-8 w-8 text-green-500" />
+              <div>
+                <div className="font-semibold text-gray-900 dark:text-white">Secure & Private</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">End-to-end encryption</div>
+              </div>
             </div>
-            <p className="text-gray-600">
-              Powered by <span className="font-semibold text-gray-900">Ritesh Kumar Mishra</span>
-            </p>
+            <div className="flex items-center space-x-3">
+              <GlobeAltIcon className="h-8 w-8 text-blue-500" />
+              <div>
+                <div className="font-semibold text-gray-900 dark:text-white">Global Infrastructure</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">99.9% uptime guarantee</div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <RocketLaunchIcon className="h-8 w-8 text-purple-500" />
+              <div>
+                <div className="font-semibold text-gray-900 dark:text-white">Lightning Fast</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">Real-time processing</div>
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-gray-500">
-            All plans include industry-leading security and privacy protection
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mt-16">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white text-center mb-12">
+            Frequently Asked Questions
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                Can I change my plan at any time?
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately and you'll be charged pro-rated amounts.
+              </p>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                Do you offer refunds?
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                We offer a 30-day money-back guarantee for all paid plans. Contact support if you're not satisfied.
+              </p>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                What happens if I exceed my limits?
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                We'll notify you when you're approaching your limits. You can upgrade your plan or purchase additional usage credits.
+              </p>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                Is there an Enterprise trial available?
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Yes! Contact our sales team for a custom Enterprise trial with access to all premium features.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="mt-16 bg-gradient-to-r from-primary-600 to-accent-600 rounded-2xl p-12 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to Clone Your Voice?
+          </h2>
+          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            Join thousands of creators, businesses, and developers who trust our platform for their voice cloning needs.
           </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/signup"
+              className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
+              Start Free Trial
+            </Link>
+            <Link
+              href="/contact"
+              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary-600 transition-colors"
+            >
+              Contact Sales
+            </Link>
+          </div>
         </div>
       </div>
-
-      {/* Payment Modal */}
-      {showPaymentModal && <PaymentModal />}
     </div>
   )
 }

@@ -1,3 +1,10 @@
+# Ensure SQLAlchemy models are registered with Base metadata
+from .user import User  # noqa: F401
+from .voice import Voice  # noqa: F401
+from .license import License  # noqa: F401
+from .usage_log import UsageLog, LicenseUsage  # noqa: F401
+from .watermark import WatermarkVerification  # noqa: F401
+
 """
 Database models for the Voice Clone Platform
 """

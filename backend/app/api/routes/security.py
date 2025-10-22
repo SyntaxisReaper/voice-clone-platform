@@ -6,6 +6,7 @@ Handles security report submission and management endpoints.
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.core.firebase_auth import get_current_user
 from pydantic import BaseModel, EmailStr, validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -133,7 +134,7 @@ async def submit_security_report(
 @router.get("/reports", response_model=SecurityReportListResponse)
 async def list_security_reports(
     db: AsyncSession = Depends(get_db),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    user: dict = Depends(get_current_user),
     page: int = 1,
     limit: int = 50,
     status: Optional[str] = None,
@@ -145,8 +146,9 @@ async def list_security_reports(
     This endpoint is for administrative purposes to view and manage
     submitted security reports.
     """
-    # TODO: Implement proper admin authentication
-    # For now, this is a placeholder that returns empty results
+    # Enforce admin access
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
     # In a real implementation, you would:
     # 1. Validate JWT token
     # 2. Check if user has admin privileges
@@ -201,12 +203,13 @@ async def list_security_reports(
 async def get_security_report(
     report_id: str,
     db: AsyncSession = Depends(get_db),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    user: dict = Depends(get_current_user)
 ):
     """
     Get a specific security report by ID (Admin only)
     """
-    # TODO: Implement proper admin authentication
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
     
     try:
         query = select(SecurityReport).where(SecurityReport.id == report_id)
@@ -234,12 +237,13 @@ async def update_report_status(
     status: str,
     resolution_notes: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    user: dict = Depends(get_current_user)
 ):
     """
     Update the status of a security report (Admin only)
     """
-    # TODO: Implement proper admin authentication
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
     
     valid_statuses = ["submitted", "reviewing", "resolved", "dismissed"]
     if status not in valid_statuses:

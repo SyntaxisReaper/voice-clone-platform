@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -131,14 +131,14 @@ export default function LoginPage() {
             )}
 
             <Input
-              label="Email address"
-              type="email"
-              name="email"
-              value={formData.email}
+              label="Username"
+              type="text"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
               required
-              autoComplete="email"
-              placeholder="you@example.com"
+              autoComplete="username"
+              placeholder="Enter your username"
             />
 
             <div>

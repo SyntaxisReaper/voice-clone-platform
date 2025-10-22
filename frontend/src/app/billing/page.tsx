@@ -2,16 +2,22 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import {
-  CreditCardIcon,
-  CalendarIcon,
-  DocumentIcon,
-  ExclamationCircleIcon,
-  CheckCircleIcon,
-  ArrowPathIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline'
-import Header from '../../components/layout/Header'
+  CreditCard,
+  Calendar,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  RotateCw,
+  X,
+  ArrowLeft,
+  DollarSign,
+  Download,
+  Crown,
+  Zap
+} from 'lucide-react'
+// import Header from '../../components/layout/Header'
 
 interface BillingInfo {
   plan: string
@@ -113,13 +119,13 @@ export default function BillingPage() {
               onClick={() => setShowCancelModal(false)}
               className="text-gray-400 hover:text-gray-600"
             >
-              <XMarkIcon className="h-6 w-6" />
+              <X className="h-6 w-6" />
             </button>
           </div>
           
           <div className="mb-6">
             <div className="flex items-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <ExclamationCircleIcon className="h-5 w-5 text-yellow-600 mr-3" />
+              <AlertCircle className="h-5 w-5 text-yellow-600 mr-3" />
               <div>
                 <p className="text-sm text-yellow-800">
                   You'll continue to have access to your Creator plan features until {formatDate(currentBilling.nextBilling)}.
@@ -165,176 +171,274 @@ export default function BillingPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header 
-        title="Billing & Subscription" 
-        subtitle="Manage your subscription and payment details"
-        backLink="/dashboard"
-      />
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen pt-20 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-8 flex items-center space-x-4"
+        >
+          <Link href="/dashboard" className="p-2 glass-button rounded-lg hover:bg-white/20 transition-colors">
+            <ArrowLeft className="h-5 w-5 text-navy" />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-poppins font-bold text-navy mb-2 flex items-center space-x-2">
+              <DollarSign className="h-8 w-8 text-berry-600" />
+              <span>Billing & Subscription 💳</span>
+            </h1>
+            <p className="text-navy/70">
+              Manage your subscription and payment details
+            </p>
+          </div>
+        </motion.div>
         {/* Company Branding */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center items-center mb-2">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-red-500 rounded-full"></div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-center mb-8"
+        >
+          <div className="flex justify-center items-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-berry-500 to-twilight-500 rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-gradient-to-r from-berry-600 to-twilight-600 rounded-full flex items-center justify-center">
+                <Crown className="w-5 h-5 text-white" />
+              </div>
             </div>
           </div>
-          <p className="text-sm text-gray-600">
-            Managed by <span className="font-semibold text-primary-600">Ritesh Kumar Mishra</span>
+          <p className="text-navy/70">
+            Secure billing powered by <span className="font-semibold text-berry-600">VCaaS Platform</span>
           </p>
-        </div>
+        </motion.div>
 
         {/* Current Subscription */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Current Subscription</h3>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="glass-card mb-8"
+        >
+          <div className="p-6 border-b border-navy/10">
+            <h3 className="text-xl font-semibold text-navy flex items-center space-x-2">
+              <Crown className="w-6 h-6 text-berry-600" />
+              <span>Current Subscription</span>
+            </h3>
           </div>
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h4 className="text-xl font-semibold text-gray-900">{currentBilling.plan} Plan</h4>
-                <p className="text-2xl font-bold text-primary-600 mt-1">
+                <h4 className="text-2xl font-bold text-navy">{currentBilling.plan} Plan</h4>
+                <p className="text-3xl font-bold bg-gradient-to-r from-berry-600 to-twilight-600 bg-clip-text text-transparent mt-1">
                   {formatCurrency(currentBilling.amount, currentBilling.currency)}
-                  <span className="text-sm text-gray-500 font-normal">/month</span>
+                  <span className="text-lg text-navy/60 font-normal">/month</span>
                 </p>
               </div>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(currentBilling.status)}`}>
-                {currentBilling.status}
-              </span>
+              <div className={`px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2 ${
+                currentBilling.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                <CheckCircle className="w-4 h-4" />
+                <span className="capitalize">{currentBilling.status}</span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center">
-                <CalendarIcon className="h-5 w-5 text-gray-400 mr-3" />
+              <div className="glass-card p-4 flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-lg flex items-center justify-center">
+                  <Calendar className="h-6 w-6 text-blue-600" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Next Billing Date</p>
-                  <p className="text-sm text-gray-600">{formatDate(currentBilling.nextBilling)}</p>
+                  <p className="font-medium text-navy">Next Billing Date</p>
+                  <p className="text-sm text-navy/70">{formatDate(currentBilling.nextBilling)}</p>
                 </div>
               </div>
               
-              <div className="flex items-center">
-                <CreditCardIcon className="h-5 w-5 text-gray-400 mr-3" />
+              <div className="glass-card p-4 flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-lg flex items-center justify-center">
+                  <CreditCard className="h-6 w-6 text-green-600" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Payment Method</p>
-                  <p className="text-sm text-gray-600">{currentBilling.paymentMethod} •••• {currentBilling.cardLast4}</p>
+                  <p className="font-medium text-navy">Payment Method</p>
+                  <p className="text-sm text-navy/70">{currentBilling.paymentMethod} •••• {currentBilling.cardLast4}</p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <div className="mt-8 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
               <Link 
                 href="/pricing"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+                className="btn-primary px-6 py-3 rounded-lg flex items-center justify-center space-x-2 font-medium"
               >
-                <ArrowPathIcon className="h-4 w-4 mr-2" />
-                Upgrade Plan
+                <Zap className="h-4 w-4" />
+                <span>Upgrade Plan</span>
               </Link>
               <button
                 onClick={() => {
                   // Handle payment method update
                   alert('Payment method update would be implemented here')
                 }}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="btn-secondary px-6 py-3 rounded-lg flex items-center justify-center space-x-2 font-medium"
               >
-                <CreditCardIcon className="h-4 w-4 mr-2" />
-                Update Payment Method
+                <CreditCard className="h-4 w-4" />
+                <span>Update Payment</span>
               </button>
               <button
                 onClick={() => setShowCancelModal(true)}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
+                className="px-6 py-3 rounded-lg text-red-600 border border-red-200 hover:bg-red-50 transition-colors flex items-center justify-center space-x-2 font-medium"
               >
-                Cancel Subscription
+                <X className="h-4 w-4" />
+                <span>Cancel Subscription</span>
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Usage Overview */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Current Usage</h3>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="glass-card mb-8"
+        >
+          <div className="p-6 border-b border-navy/10">
+            <h3 className="text-xl font-semibold text-navy flex items-center space-x-2">
+              <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-500 rounded flex items-center justify-center">
+                <span className="text-white text-xs font-bold">%</span>
+              </div>
+              <span>Current Usage</span>
+            </h3>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-900">Voice Clones</span>
-                  <span className="text-sm text-gray-600">3 / 10</span>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                className="glass-card p-4"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-medium text-navy">Voice Clones</span>
+                  <span className="text-sm text-navy/70 font-semibold">3 / 10</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-primary-600 h-2 rounded-full" style={{ width: '30%' }}></div>
+                <div className="w-full bg-navy/20 rounded-full h-2 overflow-hidden">
+                  <motion.div 
+                    className="bg-gradient-to-r from-berry-500 to-twilight-500 h-2 rounded-full"
+                    initial={{ width: '0%' }}
+                    animate={{ width: '30%' }}
+                    transition={{ duration: 1, delay: 0.7 }}
+                  />
                 </div>
-              </div>
+              </motion.div>
               
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-900">Monthly Generation</span>
-                  <span className="text-sm text-gray-600">2.5h / 5h</span>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="glass-card p-4"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-medium text-navy">Monthly Generation</span>
+                  <span className="text-sm text-navy/70 font-semibold">2.5h / 5h</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '50%' }}></div>
+                <div className="w-full bg-navy/20 rounded-full h-2 overflow-hidden">
+                  <motion.div 
+                    className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full"
+                    initial={{ width: '0%' }}
+                    animate={{ width: '50%' }}
+                    transition={{ duration: 1, delay: 0.8 }}
+                  />
                 </div>
-              </div>
+              </motion.div>
               
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-900">API Calls</span>
-                  <span className="text-sm text-gray-600">1,250 / 10,000</span>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+                className="glass-card p-4"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-medium text-navy">API Calls</span>
+                  <span className="text-sm text-navy/70 font-semibold">1,250 / 10,000</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '12.5%' }}></div>
+                <div className="w-full bg-navy/20 rounded-full h-2 overflow-hidden">
+                  <motion.div 
+                    className="bg-gradient-to-r from-green-400 to-emerald-500 h-2 rounded-full"
+                    initial={{ width: '0%' }}
+                    animate={{ width: '12.5%' }}
+                    transition={{ duration: 1, delay: 0.9 }}
+                  />
                 </div>
-              </div>
+              </motion.div>
             </div>
             
-            <div className="mt-4 text-sm text-gray-600">
-              Usage resets on {formatDate(currentBilling.nextBilling)}
+            <div className="mt-6 p-4 glass-card bg-blue-50/30">
+              <p className="text-navy/70 text-center">
+                🔄 Usage resets on <span className="font-semibold text-navy">{formatDate(currentBilling.nextBilling)}</span>
+              </p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Billing History */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Billing History</h3>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="glass-card"
+        >
+          <div className="p-6 border-b border-navy/10">
+            <h3 className="text-xl font-semibold text-navy flex items-center space-x-2">
+              <FileText className="w-6 h-6 text-berry-600" />
+              <span>Billing History</span>
+            </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-navy/60 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-navy/60 uppercase tracking-wider">
                     Description
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-navy/60 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-navy/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-navy/60 uppercase tracking-wider">
                     Invoice
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {transactions.map((transaction) => (
-                  <tr key={transaction.id}>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+              <tbody className="divide-y divide-navy/10">
+                {transactions.map((transaction, index) => (
+                  <motion.tr 
+                    key={transaction.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }}
+                    className="hover:bg-white/30 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm text-navy">
                       {formatDate(transaction.date)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm text-navy">
                       {transaction.description}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm font-semibold text-navy">
                       {formatCurrency(transaction.amount, transaction.currency)}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>
-                        {transaction.status}
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 w-fit ${
+                        transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        <CheckCircle className="w-3 h-3" />
+                        <span className="capitalize">{transaction.status}</span>
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm">
@@ -344,31 +448,38 @@ export default function BillingPage() {
                             console.log(`Downloading invoice ${transaction.id}`)
                             alert('Invoice download would be implemented here')
                           }}
-                          className="text-primary-600 hover:text-primary-700 inline-flex items-center"
+                          className="text-berry-600 hover:text-berry-700 inline-flex items-center space-x-1 font-medium hover:bg-berry-50 px-2 py-1 rounded transition-colors"
                         >
-                          <DocumentIcon className="h-4 w-4 mr-1" />
-                          Download
+                          <Download className="h-4 w-4" />
+                          <span>Download</span>
                         </button>
                       )}
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
 
         {/* Footer Branding */}
-        <div className="text-center mt-8 pt-6 border-t border-gray-200">
-          <div className="flex justify-center items-center space-x-2">
-            <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-gradient-to-r from-purple-600 to-red-500 rounded-full"></div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="text-center mt-8 pt-6 border-t border-navy/20"
+        >
+          <div className="flex justify-center items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-berry-500 to-twilight-500 rounded-full flex items-center justify-center shadow-sm">
+              <div className="w-5 h-5 bg-gradient-to-r from-berry-600 to-twilight-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">✓</span>
+              </div>
             </div>
-            <p className="text-sm text-gray-600">
-              Secure billing powered by <span className="font-semibold text-gray-900">Ritesh Kumar Mishra</span>
+            <p className="text-navy/70">
+              🔒 Secure billing powered by <span className="font-semibold text-berry-600">VCaaS Platform</span>
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Cancel Subscription Modal */}

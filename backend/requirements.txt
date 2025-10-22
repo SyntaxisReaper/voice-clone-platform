@@ -55,6 +55,9 @@ email-validator==2.1.0
 loguru==0.7.2
 sentry-sdk[fastapi]==1.38.0
 
+# Speaker verification / anti-spoof (optional, enables ECAPA)
+speechbrain==0.5.16
+
 # Development and testing
 pytest==7.4.3
 pytest-asyncio==0.21.1

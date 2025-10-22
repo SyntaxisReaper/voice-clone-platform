@@ -1,277 +1,208 @@
 'use client'
 
-import { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { TypeAnimation } from 'react-type-animation'
 import { 
-  MicrophoneIcon, 
-  SpeakerWaveIcon, 
-  ChartBarIcon, 
-  ShieldCheckIcon,
-  PlayIcon,
-  StopIcon,
-  Bars3Icon,
-  XMarkIcon
-} from '@heroicons/react/24/outline'
-import Logo from '../components/common/Logo'
+  Mic, 
+  PlayCircle, 
+  Shield, 
+  Zap, 
+  ArrowRight, 
+  CheckCircle,
+  Star,
+  Users,
+  Volume2,
+  Brain
+} from 'lucide-react'
 
-export default function Home() {
-  const [isRecording, setIsRecording] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  const features = [
-    {
-      icon: MicrophoneIcon,
-      title: 'Voice Recording',
-      description: 'Record high-quality voice samples for training'
-    },
-    {
-      icon: SpeakerWaveIcon,
-      title: 'AI Voice Cloning',
-      description: 'Clone voices with advanced AI models'
-    },
-    {
-      icon: ChartBarIcon,
-      title: 'Usage Dashboard',
-      description: 'Monitor your voice usage and analytics'
-    },
-    {
-      icon: ShieldCheckIcon,
-      title: 'Secure & Licensed',
-      description: 'Watermarked audio with permission controls'
-    }
-  ]
+export default function HomePage() {
 
   return (
-    <main className="min-h-screen">
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="flex-shrink-0">
-                <Logo size="md" variant="full" />
-              </Link>
-            </div>
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-poppins font-bold text-navy mb-6">
+              Voice Clone as a{' '}
+              <span className="gradient-text-berry">Service</span>
+            </h1>
             
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-4">
-              <Link href="/dashboard" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Dashboard
-              </Link>
-              <Link href="/training" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Voice Training
-              </Link>
-              <Link href="/playground" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Playground
-              </Link>
-              <Link href="/pricing" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Pricing
+            <div className="h-16 flex items-center justify-center mb-8">
+              <TypeAnimation
+                sequence={[
+                  'Your voice. Your license. Your rules.',
+                  2000,
+                  'Clone voices with ethical licensing.',
+                  2000,
+                  'Professional TTS with watermarking.',
+                  2000,
+                  'Creator-first voice platform.',
+                  2000,
+                ]}
+                wrapper="p"
+                speed={50}
+                className="text-xl sm:text-2xl text-navy/80 font-medium"
+                repeat={Infinity}
+                cursor={true}
+                style={{
+                  display: 'inline-block',
+                  minHeight: '2.5rem'
+                }}
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+              <Link href="/playground" className="btn-primary text-lg px-8 py-4 rounded-xl inline-flex items-center space-x-2">
+                <PlayCircle className="w-5 h-5" />
+                <span>Try Playground</span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
               
-              {/* Auth Buttons */}
-              <div className="flex items-center space-x-2 ml-4 border-l border-gray-300 pl-4">
-                <Link href="/login" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Login
-                </Link>
-                <Link href="/signup" className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                  Sign Up
-                </Link>
-              </div>
+              <Link href="/dashboard" className="btn-secondary text-lg px-8 py-4 rounded-xl inline-flex items-center space-x-2">
+                <Brain className="w-5 h-5" />
+                <span>Start Creating</span>
+              </Link>
             </div>
-            
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-gray-700 hover:text-primary-600 p-2"
-              >
-                {mobileMenuOpen ? (
-                  <XMarkIcon className="h-6 w-6" />
-                ) : (
-                  <Bars3Icon className="h-6 w-6" />
-                )}
-              </button>
-            </div>
-          </div>
-          
-          {/* Mobile Navigation Menu */}
-          {mobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-md">
-              <div className="px-2 pt-2 pb-3 space-y-1">
-                <Link 
-                  href="/dashboard" 
-                  className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link 
-                  href="/training" 
-                  className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Voice Training
-                </Link>
-                <Link 
-                  href="/playground" 
-                  className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Playground
-                </Link>
-                <Link 
-                  href="/pricing" 
-                  className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Pricing
-                </Link>
-                
-                {/* Auth Links - Mobile */}
-                <div className="border-t border-gray-200 pt-2 mt-4">
-                  <Link 
-                    href="/login" 
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Login
-                  </Link>
-                  <Link 
-                    href="/signup" 
-                    className="bg-primary-600 hover:bg-primary-700 text-white block px-3 py-2 rounded-md text-base font-medium mt-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Sign Up
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="relative py-20 sm:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 mb-8">
-              VCAAS: Voice Cloning
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-600">
-                {' '}as a Service
-              </span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
-              Create realistic voice clones, generate speech with emotional control, 
-              and manage your voice assets with advanced security and licensing features.
-            </p>
-            
-            {/* Quick Demo */}
-            <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto mb-16">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6">Try Voice Recording</h3>
-              <div className="flex flex-col items-center space-y-4">
-                <button
-                  onClick={() => setIsRecording(!isRecording)}
-                  className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    isRecording 
-                      ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
-                      : 'bg-primary-600 hover:bg-primary-700'
-                  }`}
-                >
-                  {isRecording ? (
-                    <StopIcon className="h-8 w-8 text-white" />
-                  ) : (
-                    <MicrophoneIcon className="h-8 w-8 text-white" />
-                  )}
-                </button>
-                <p className="text-gray-600">
-                  {isRecording ? 'Recording... Click to stop' : 'Click to start recording'}
-                </p>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full bg-gradient-to-r from-primary-500 to-accent-500 transition-all duration-300 ${
-                      isRecording ? 'w-full animate-pulse' : 'w-0'
-                    }`}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Features */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Powerful Voice Cloning Features
+            <h2 className="text-3xl sm:text-4xl font-poppins font-bold text-navy mb-4">
+              Powerful Features for{' '}
+              <span className="gradient-text-berry">Creators</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Everything you need to create, manage, and protect your voice clones
-            </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={index}
-                className="voice-card bg-gradient-to-br from-white to-gray-50 p-6 rounded-xl border border-gray-200"
-              >
-                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
-                  <feature.icon className="h-6 w-6 text-primary-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                icon: Mic,
+                title: 'Voice Cloning',
+                description: 'Upload samples and create high-quality voice clones.',
+                color: 'from-berry-500 to-berry-600'
+              },
+              {
+                icon: Shield,
+                title: 'Ethical Licensing',
+                description: 'Built-in licensing with usage tracking.',
+                color: 'from-twilight-600 to-twilight-700'
+              },
+              {
+                icon: Volume2,
+                title: 'Watermarking',
+                description: 'Invisible watermarks for traceability.',
+                color: 'from-berry-600 to-twilight-600'
+              },
+              {
+                icon: Zap,
+                title: 'Fast API',
+                description: 'Lightning-fast TTS API with SDKs.',
+                color: 'from-twilight-500 to-berry-500'
+              }
+            ].map((feature, index) => {
+              const Icon = feature.icon
+              return (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 * index }}
+                  viewport={{ once: true }}
+                  className="glass-card p-6 hover:scale-105 transition-transform duration-300"
+                >
+                  <div className={`w-12 h-12 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-4`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                  
+                  <h3 className="text-xl font-semibold text-navy mb-3">{feature.title}</h3>
+                  <p className="text-navy/70">{feature.description}</p>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary-600 to-accent-600">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8">
-            Ready to Clone Your Voice?
-          </h2>
-          <p className="text-xl text-primary-100 mb-12">
-            Join thousands of creators using AI voice cloning for content creation, 
-            accessibility, and creative projects.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup" className="bg-white text-primary-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-colors inline-block">
-              Start Free Trial
-            </Link>
-            <Link href="/pricing" className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-primary-600 transition-colors inline-block">
-              View Pricing
-            </Link>
-          </div>
+      {/* CTA */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="glass-card p-12 text-center"
+          >
+            <h2 className="text-3xl sm:text-4xl font-poppins font-bold text-navy mb-4">
+              Ready to Clone Your Voice?
+            </h2>
+            <p className="text-lg text-navy/70 mb-8 max-w-2xl mx-auto">
+              Join thousands of creators using VCaaS for ethical voice cloning.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/training" className="btn-primary text-lg px-8 py-4 rounded-xl inline-flex items-center space-x-2">
+                <Mic className="w-5 h-5" />
+                <span>Create Voice</span>
+              </Link>
+              
+              <Link href="/playground" className="btn-secondary text-lg px-8 py-4 rounded-xl inline-flex items-center space-x-2">
+                <PlayCircle className="w-5 h-5" />
+                <span>Try Demo</span>
+              </Link>
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 md:mb-0">
-              <Logo size="md" variant="full" textColor="light" />
-              <span className="ml-2 text-sm text-gray-400">by Ritesh Kumar Mishra</span>
+      <footer className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="glass-card p-8 text-center"
+          >
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center justify-center md:justify-start mb-4 md:mb-0">
+                <div className="w-8 h-8 bg-gradient-to-br from-berry-500 to-berry-600 rounded-lg flex items-center justify-center mr-3">
+                  <Volume2 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-poppins font-bold gradient-text-berry">VCaaS</h3>
+                  <p className="text-xs text-navy/70">Voice Clone as a Service</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap justify-center md:justify-end gap-6 text-sm">
+                <Link href="/privacy" className="text-navy/70 hover:text-berry-600 transition-colors">Privacy</Link>
+                <Link href="/terms" className="text-navy/70 hover:text-berry-600 transition-colors">Terms</Link>
+                <Link href="/support" className="text-navy/70 hover:text-berry-600 transition-colors">Support</Link>
+                <Link href="/docs" className="text-navy/70 hover:text-berry-600 transition-colors">API Docs</Link>
+              </div>
             </div>
-            <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-white">Privacy</a>
-              <a href="#" className="text-gray-400 hover:text-white">Terms</a>
-              <a href="#" className="text-gray-400 hover:text-white">Support</a>
+            
+            <div className="mt-6 pt-6 border-t border-navy/10 text-center">
+              <p className="text-sm text-navy/60">
+                © 2024 VCaaS - Voice Clone as a Service. All rights reserved. Built with ❤️ for creators.
+              </p>
             </div>
-          </div>
-          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
-            <p>&copy; 2024 VCAAS - Voice Cloning as a Service. All rights reserved.</p>
-          </div>
+          </motion.div>
         </div>
       </footer>
-    </main>
+    </div>
   )
 }

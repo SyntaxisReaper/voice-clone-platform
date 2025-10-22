@@ -159,6 +159,44 @@ export const downloadAudio = async (jobId: string): Promise<Blob> => {
   return response.data;
 };
 
+// Zero-shot cloning (XTTS v2)
+export const cloneZeroShot = async (
+  text: string,
+  language: string,
+  referenceFile: File
+): Promise<Blob> => {
+  const formData = new FormData();
+  formData.append('text', text);
+  formData.append('language', language);
+  formData.append('reference', referenceFile);
+
+  try {
+    const response = await api.post('/api/tts/clone', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      responseType: 'blob',
+      timeout: 120000, // allow longer timeout for first model load
+    });
+    return response.data;
+  } catch (err: any) {
+    // Map common errors to clearer messages
+    if (err?.code === 'ECONNABORTED') {
+      throw new Error('The cloning request timed out. The first request may download the model and can take a few minutes. Please try again shortly or use the warmup endpoint.');
+    }
+    const status = err?.response?.status
+    if (status === 413) {
+      throw new Error('The reference audio is too large. Please keep it under 20 MB and try again.')
+    }
+    if (status === 415) {
+      throw new Error('Unsupported file type. Please upload a WAV or MP3 audio file.')
+    }
+    const detail = err?.response?.data?.detail
+    if (typeof detail === 'string') {
+      throw new Error(detail)
+    }
+    throw err
+  }
+};
+
 // Voice Training
 export const uploadVoiceSample = async (file: File, userId = 'default') => {
   const formData = new FormData();

@@ -237,6 +237,33 @@ class AudioProcessor:
         self.supported_formats = ['.wav', '.mp3', '.flac', '.m4a', '.ogg', '.aac']
         self.target_sample_rate = 22050
         self.target_format = 'wav'
+
+    async def get_audio_info_from_path(self, path: str) -> Dict[str, Any]:
+        """Lightweight audio info by reading a file path."""
+        try:
+            # Load minimal portion to get sample rate
+            audio, sr = librosa.load(path, sr=None, mono=True, duration=0.1)
+            duration = float(librosa.get_duration(path=path))
+            file_size_bytes = os.path.getsize(path)
+            ext = os.path.splitext(path)[1].lower()
+            return {
+                'filename': os.path.basename(path),
+                'format': ext,
+                'duration': duration,
+                'estimated_duration': duration,
+                'sample_rate': sr,
+                'file_size_bytes': file_size_bytes,
+                'file_size_mb': file_size_bytes / (1024 * 1024),
+                'is_supported': ext in self.supported_formats,
+                'quality_score': 0.85,
+            }
+        except Exception as e:
+            logger.error(f"Audio info read failed for {path}: {e}")
+            return {
+                'filename': os.path.basename(path),
+                'error': str(e),
+                'file_size_bytes': os.path.getsize(path) if os.path.exists(path) else 0,
+            }
     
     async def process_audio_file(
         self, 

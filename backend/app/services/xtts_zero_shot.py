@@ -17,6 +17,11 @@ import soundfile as sf
 try:
     import torch
     from TTS.api import TTS  # Coqui TTS
+    
+    # Fix PyTorch 2.6+ strict weight loading for XTTS
+    if hasattr(torch.serialization, "add_safe_globals"):
+        from TTS.tts.configs.xtts_config import XttsConfig
+        torch.serialization.add_safe_globals([XttsConfig])
 except Exception as e:  # pragma: no cover
     TTS = None  # type: ignore
     torch = None  # type: ignore

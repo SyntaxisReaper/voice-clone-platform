@@ -130,3 +130,6 @@ class DatabaseManager:
 
 # Global database manager instance
 db_manager = DatabaseManager()
+
+# Export engine for main.py (aliased to async_engine)
+engine = async_engine

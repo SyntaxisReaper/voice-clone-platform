@@ -37,6 +37,25 @@ async def get_current_user(
 ) -> User:
     """Get the current authenticated user from JWT token."""
     token = credentials.credentials
+    
+    # MOCK AUTH KEY
+    if settings.DEBUG and token == "mock-token-123":
+        user = db.query(User).filter(User.email == "demo@vcaas.com").first()
+        if not user:
+            # Auto-create mock user if missing
+            password_hash = get_password_hash("demo123")
+            user = User(
+                username="demo_user",
+                email="demo@vcaas.com",
+                hashed_password=password_hash,
+                full_name="Demo User",
+                is_active=True
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return user
+
     payload = verify_token(token)
     if not payload:
         raise HTTPException(

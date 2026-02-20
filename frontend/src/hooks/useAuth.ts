@@ -16,65 +16,120 @@ export const useAuth = () => {
   })
 
   useEffect(() => {
+    // Check if Firebase is initialized
     if (!isFirebaseInitialized() || !auth) {
+      console.warn('Authentication: Firebase not initialized (likely due to missing/invalid config).');
       setAuthState({
-        user: null,
+        user: null, // Set to null to treating as logged out
         loading: false,
-        error: 'Firebase is not initialized'
+        error: 'Firebase not configured'
       })
       return
     }
 
+    // Failsafe timeout in case onAuthStateChanged hangs
+    const timeoutId = setTimeout(() => {
+      setAuthState(prev => {
+        if (prev.loading) {
+          console.warn('Authentication: Initialization timed out. Forcing completion.');
+          return { ...prev, loading: false }
+        }
+        return prev
+      })
+    }, 5000) // 5 seconds timeout
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      clearTimeout(timeoutId)
       if (user) {
         await upsertUserProfile(user)
         try {
           const token = await user.getIdToken()
           const { syncUserProfile } = await import('@/lib/api')
           await syncUserProfile(user as any, token)
-        } catch {}
+        } catch { }
       }
       setAuthState({
         user,
         loading: false,
         error: null
       })
+    }, (error) => {
+      clearTimeout(timeoutId)
+      console.error('Authentication Error:', error)
+      setAuthState({
+        user: null,
+        loading: false,
+        error: error.message
+      })
     })
 
-    return () => unsubscribe()
+    return () => {
+      unsubscribe()
+      clearTimeout(timeoutId)
+    }
   }, [])
 
   const signInWithGoogleHandler = async () => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }))
-    
-    const result = await signInWithGoogle()
-    
-    if (!result.success) {
-      setAuthState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: result.error || 'Sign-in failed' 
+
+    let result: { success: boolean; user?: any; error?: string };
+    if (!isFirebaseInitialized()) {
+      // Use Mock Auth
+      const { mockSignIn } = await import('@/lib/firebase');
+      result = await mockSignIn();
+    } else {
+      // Use Real Auth
+      result = await signInWithGoogle()
+    }
+
+    if (!result.success || !result.user) {
+      setAuthState(prev => ({
+        ...prev,
+        loading: false,
+        error: result.error || 'Sign-in failed'
       }))
     } else {
-      setAuthState(prev => ({ ...prev, loading: false }))
+      setAuthState(prev => ({ ...prev, user: result.user, loading: false }))
+      // Set API token
+      try {
+        const token = await result.user.getIdToken();
+        const { setAuthToken } = await import('@/lib/api');
+        setAuthToken(token);
+        // Also sync profile for mock user to ensure backend DB record exists
+        const { syncUserProfile } = await import('@/lib/api');
+        await syncUserProfile(result.user as any, token);
+      } catch (e) {
+        console.error("Failed to set auth token or sync profile", e);
+      }
     }
-    
+
     return result
   }
 
   const signOut = async () => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }))
-    
-    const result = await signOutUser()
-    
-    if (!result.success) {
-      setAuthState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: result.error || 'Sign-out failed' 
-      }))
+
+    let result: { success: boolean; error?: string };
+    if (!isFirebaseInitialized()) {
+      const { mockSignOut } = await import('@/lib/firebase');
+      result = await mockSignOut();
+    } else {
+      const { signOutUser } = await import('@/lib/firebase');
+      result = await signOutUser()
     }
-    
+
+    if (!result.success) {
+      setAuthState(prev => ({
+        ...prev,
+        loading: false,
+        error: result.error || 'Sign-out failed'
+      }))
+    } else {
+      setAuthState(prev => ({ ...prev, user: null, loading: false }))
+      const { setAuthToken } = await import('@/lib/api');
+      setAuthToken(null);
+    }
+
     return result
   }
 

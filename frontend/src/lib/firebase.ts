@@ -24,21 +24,32 @@ let analytics: Analytics | undefined
 let rtdb: Database | undefined
 
 if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-  auth = getAuth(app)
-  db = getFirestore(app)
   try {
-    analytics = getAnalytics(app)
-  } catch {}
-  try {
-    rtdb = getDatabase(app)
-  } catch {}
-  
-  // Configure Google Auth Provider
-  googleProvider = new GoogleAuthProvider()
-  googleProvider.setCustomParameters({
-    hd: 'gmail.com' // Restrict to Gmail domain (adjust/remove as needed)
-  })
+    // Check if using the default placeholder API key from the template
+    if (firebaseConfig.apiKey === 'AIzaSyCGd8v-lIiK6X_daXYx49Tc9DtI96HvXvU') {
+      console.warn('⚠️  Using placeholder Firebase API Key. Firebase will NOT be initialized.');
+      console.warn('👉  Please update .env.local with valid Firebase credentials.');
+    } else {
+      app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+      auth = getAuth(app)
+      db = getFirestore(app)
+      try {
+        analytics = getAnalytics(app)
+      } catch { }
+      try {
+        rtdb = getDatabase(app)
+      } catch { }
+
+      // Configure Google Auth Provider
+      googleProvider = new GoogleAuthProvider()
+      googleProvider.setCustomParameters({
+        hd: 'gmail.com' // Restrict to Gmail domain (adjust/remove as needed)
+      })
+      console.log('✅  Firebase initialized successfully');
+    }
+  } catch (error) {
+    console.error('❌  Firebase initialization failed:', error);
+  }
 }
 
 export { auth, db, app, analytics }
@@ -76,7 +87,7 @@ export const upsertUserProfile = async (user: User | null, extras?: Partial<Pick
           updatedAt: rtdbServerTimestamp(),
         } as any)
       }
-    } catch {}
+    } catch { }
     return { success: true }
   } catch (e: any) {
     return { success: false, error: e?.message }
@@ -96,11 +107,11 @@ export const signInWithGoogle = async () => {
       error: 'Firebase is not initialized'
     }
   }
-  
+
   try {
     const result = await signInWithPopup(auth, googleProvider)
     const user = result.user
-    
+
     // Log user info for development
     console.log('Google Sign-In successful:', {
       uid: user.uid,
@@ -108,7 +119,7 @@ export const signInWithGoogle = async () => {
       displayName: user.displayName,
       photoURL: user.photoURL
     })
-    
+
     return {
       success: true,
       user: user,
@@ -116,9 +127,9 @@ export const signInWithGoogle = async () => {
     }
   } catch (error: any) {
     console.error('Google Sign-In error:', error)
-    
+
     let errorMessage = 'Google sign-in failed. Please try again.'
-    
+
     switch (error.code) {
       case 'auth/popup-closed-by-user':
         errorMessage = 'Sign-in was cancelled. Please try again.'
@@ -136,7 +147,7 @@ export const signInWithGoogle = async () => {
         errorMessage = 'Too many attempts. Please try again later.'
         break
     }
-    
+
     return {
       success: false,
       error: errorMessage,
@@ -147,12 +158,12 @@ export const signInWithGoogle = async () => {
 
 export const signOutUser = async () => {
   if (!isFirebaseInitialized() || !auth) {
-    return { 
-      success: false, 
-      error: 'Firebase is not initialized' 
+    return {
+      success: false,
+      error: 'Firebase is not initialized'
     }
   }
-  
+
   try {
     await signOut(auth)
     return { success: true }
@@ -176,4 +187,49 @@ export const isAuthenticated = (): boolean => {
     return false
   }
   return !!auth.currentUser
+}
+
+// Mock Auth Helpers
+export const mockSignIn = async () => {
+  console.log('🔐  Performing MOCK Sign-In');
+
+  // Creates a consistent mock user
+  const mockUser = {
+    uid: 'mock-user-123',
+    email: 'demo@vcaas.com',
+    displayName: 'Demo User',
+    photoURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+    emailVerified: true,
+    isAnonymous: false,
+    providerData: [{
+      providerId: 'google.com',
+      uid: 'mock-google-123',
+      displayName: 'Demo User',
+      email: 'demo@vcaas.com',
+      phoneNumber: null,
+      photoURL: null,
+    }],
+    getIdToken: async () => 'mock-token-123',
+    // Minimal compliance with User interface
+    metadata: {
+      creationTime: new Date().toISOString(),
+      lastSignInTime: new Date().toISOString(),
+    },
+    refreshToken: 'mock-refresh-token',
+    tenantId: null,
+    delete: async () => { },
+    toJSON: () => ({}),
+    reload: async () => { },
+  };
+
+  return {
+    success: true,
+    user: mockUser as unknown as User,
+    isNewUser: false
+  }
+}
+
+export const mockSignOut = async () => {
+  console.log('🔓  Performing MOCK Sign-Out');
+  return { success: true }
 }

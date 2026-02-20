@@ -9,12 +9,16 @@ from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.models.mongo.user import User
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from app.models.user import User
 from app.core.config import settings
+from app.core.database import get_async_db
 
 security = HTTPBearer()
 
-SECRET_KEY = getattr(settings, 'SECRET_KEY', 'your-secret-key-here')  # Should be from env
+SECRET_KEY = getattr(settings, 'SECRET_KEY', 'your-secret-key-here')
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -41,7 +45,10 @@ def verify_token(token: str) -> Optional[dict]:
         return None
 
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_async_db)
+) -> User:
     """Get current authenticated user from token"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -62,7 +69,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     
     # Look up user in database
     try:
-        user = await User.get(user_id)
+        # Use simple get for primary key since User.id is the PK
+        user = await db.get(User, user_id)
+        
         if user is None:
             raise credentials_exception
         
@@ -73,13 +82,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
                 detail="User account is inactive"
             )
         
-        # Update last activity
-        user.last_activity_at = datetime.utcnow()
-        await user.save()
+        # Update last activity - handled better in service layer to avoid db writes on every read
+        # user.last_activity_at = datetime.utcnow()
+        # await db.commit()
         
         return user
         
     except Exception as e:
+        # logger.error(f"Auth error: {e}")
         raise credentials_exception
 
 

@@ -60,11 +60,13 @@ try {
 }
 
 # Start the development server
-Write-Host "`n🌟 Starting VCaaS Backend Server..." -ForegroundColor Green
-Write-Host "📍 Server will be available at: http://localhost:8000" -ForegroundColor Cyan
-Write-Host "📖 API Documentation: http://localhost:8000/docs" -ForegroundColor Cyan
-Write-Host "🔍 Health Check: http://localhost:8000/health" -ForegroundColor Cyan
-Write-Host "`nPress Ctrl+C to stop the server`n" -ForegroundColor Yellow
+
+# Start the development server
+Write-Host "Starting VCaaS Backend Server..." -ForegroundColor Green
+Write-Host "Server URL: http://localhost:8000" -ForegroundColor Cyan
+Write-Host "Docs URL: http://localhost:8000/docs" -ForegroundColor Cyan
+Write-Host "Health URL: http://localhost:8000/health" -ForegroundColor Cyan
+Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
 
 # Start uvicorn with reload
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

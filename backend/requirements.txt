@@ -4,14 +4,15 @@ uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 python-jose[cryptography]==3.3.0
 python-dotenv==1.0.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
 
 # Database
 sqlalchemy==2.0.23
 alembic==1.13.1
-psycopg2-binary==2.9.9
-asyncpg==0.29.0
+# psycopg2-binary==2.9.9
+# asyncpg==0.29.0
+aiosqlite>=0.17.0
 
 # Authentication and Security
 firebase-admin==6.3.0
@@ -24,23 +25,24 @@ google-cloud-storage==2.10.0
 aiofiles==23.2.0
 
 # Audio processing and ML
-librosa==0.10.1
-soundfile==0.12.1
-numpy==1.24.3
-scipy==1.11.4
-torch==2.1.1
-torchaudio==2.1.1
-transformers==4.36.2
+librosa>=0.10.1
+soundfile>=0.12.1
+numpy>=1.26.0
+scipy>=1.12.0
+torch<2.6.0,>=2.2.0
+torchaudio<2.6.0,>=2.2.0
+transformers<5.0.0,>=4.36.2
+huggingface_hub<0.24.0
 
 # TTS and Voice Cloning
-TTS==0.22.0
-tortoise-tts==3.0.0
-espeak-ng==1.51
-phonemizer==3.2.1
+TTS>=0.22.0
+# tortoise-tts>=3.0.0
+# espeak-ng>=1.5.1
+phonemizer>=3.2.1
 
 # Audio watermarking
-pydub==0.25.1
-wave==0.0.2
+pydub>=0.25.1
+# wave>=0.0.2
 
 # Background tasks and caching
 celery==5.3.4
@@ -48,8 +50,8 @@ redis==5.0.1
 flower==2.0.1
 
 # API documentation and validation
-pydantic-core==2.14.5
-email-validator==2.1.0
+pydantic-core>=2.14.5
+email-validator>=2.1.0
 
 # Logging and monitoring
 loguru==0.7.2

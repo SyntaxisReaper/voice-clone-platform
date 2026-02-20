@@ -14,6 +14,9 @@ import soundfile as sf
 try:
     import torch  # type: ignore
     from TTS.api import TTS  # type: ignore
+    if hasattr(torch.serialization, "add_safe_globals"):
+        from TTS.tts.configs.xtts_config import XttsConfig
+        torch.serialization.add_safe_globals([XttsConfig])
 except Exception:  # pragma: no cover
     TTS = None  # type: ignore
     torch = None  # type: ignore

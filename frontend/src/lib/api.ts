@@ -15,9 +15,20 @@ const api = axios.create({
   },
 });
 
-// Add request interceptor for logging
+// Token management
+let authToken: string | null = null;
+export const setAuthToken = (token: string | null) => {
+  authToken = token;
+};
+
+// Add request interceptor for logging and auth
 api.interceptors.request.use(
   (config) => {
+    // Add auth token if available
+    if (authToken) {
+      config.headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
@@ -276,16 +287,16 @@ export const pollJobStatus = async (
 ): Promise<TTSJob> => {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const job = await getTTSJob(jobId);
-    
+
     if (job.status === 'completed' || job.status === 'failed') {
       return job;
     }
-    
+
     if (attempt < maxAttempts - 1) {
       await new Promise(resolve => setTimeout(resolve, interval));
     }
   }
-  
+
   throw new Error('Job polling timeout');
 };
 
@@ -296,16 +307,16 @@ export const pollTrainingStatus = async (
 ): Promise<TrainingJob> => {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const job = await getTrainingJobStatus(trainingId);
-    
+
     if (job.status === 'completed' || job.status === 'failed') {
       return job;
     }
-    
+
     if (attempt < maxAttempts - 1) {
       await new Promise(resolve => setTimeout(resolve, interval));
     }
   }
-  
+
   throw new Error('Training polling timeout');
 };
 

@@ -8,8 +8,8 @@ from typing import List, Optional
 from datetime import datetime
 
 from app.core.database import get_db
-from app.core.firebase_auth import get_current_user
-from app.models.voice_sample import VoiceSample
+from app.api.routes.auth import get_current_user
+from app.models.voice import VoiceSample
 
 router = APIRouter()
 security = HTTPBearer()

@@ -8,9 +8,9 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from pydantic import BaseModel
 
-from app.core.auth import get_current_user
-from app.models.mongo.user import User
-from app.models.mongo.voice_sample import VoiceSample
+from app.api.routes.auth import get_current_user
+from app.models.user import User
+from app.models.voice import VoiceSample
 from app.services.file_upload_service import file_upload_service
 
 router = APIRouter()

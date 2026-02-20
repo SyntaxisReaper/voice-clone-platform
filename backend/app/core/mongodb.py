@@ -6,15 +6,30 @@ Handles MongoDB connection, Beanie ODM initialization, and database setup.
 
 import asyncio
 from typing import List
-from motor.motor_asyncio import AsyncIOMotorClient
-from beanie import init_beanie
 from loguru import logger
 import os
 
-from app.models.mongo.user import User
-from app.models.mongo.voice_sample import VoiceSample
-from app.models.mongo.voice_model import VoiceModel
-from app.models.mongo.tts_job import TTSJob
+try:
+    from motor.motor_asyncio import AsyncIOMotorClient
+    from beanie import init_beanie
+    HAS_MONGO = True
+except ImportError:
+    AsyncIOMotorClient = None
+    init_beanie = None
+    HAS_MONGO = False
+    logger.warning("MongoDB drivers (motor, beanie) not installed. Running in no-Mongo mode.")
+
+# Import models only if Mongo is available to avoid errors
+if HAS_MONGO:
+    from app.models.mongo.user import User
+    from app.models.mongo.voice_sample import VoiceSample
+    from app.models.mongo.voice_model import VoiceModel
+    from app.models.mongo.tts_job import TTSJob
+else:
+    User = None
+    VoiceSample = None
+    VoiceModel = None
+    TTSJob = None
 
 
 class MongoDB:
@@ -31,6 +46,10 @@ class MongoDB:
     
     async def connect(self):
         """Connect to MongoDB and initialize Beanie ODM"""
+        if not HAS_MONGO:
+            logger.info("MongoDB disabled (drivers not found)")
+            return False
+
         try:
             logger.info(f"Connecting to MongoDB: {self.mongodb_url}")
             

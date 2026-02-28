@@ -3,13 +3,13 @@
 import React, { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import axios from 'axios'
-import { 
-  PlayCircle, 
-  Pause, 
-  Download, 
-  Upload, 
-  Mic, 
-  Volume2, 
+import {
+  PlayCircle,
+  Pause,
+  Download,
+  Upload,
+  Mic,
+  Volume2,
   Settings,
   Wand2,
   Copy,
@@ -33,6 +33,7 @@ export default function PlaygroundPage() {
   })
   const [language, setLanguage] = useState('en')
   const [referenceFile, setReferenceFile] = useState<File | null>(null)
+  const [addWatermark, setAddWatermark] = useState(true)
 
   const audioRef = useRef<HTMLAudioElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -58,6 +59,9 @@ export default function PlaygroundPage() {
       fd.append('text', text)
       fd.append('language', language)
       fd.append('reference', referenceFile)
+      if (addWatermark) {
+        fd.append('watermark', 'true')
+      }
       const res = await axios.post(`${API}/api/v1/tts/clone`, fd, { responseType: 'blob' })
       const blobUrl = URL.createObjectURL(new Blob([res.data], { type: 'audio/wav' }))
       setGeneratedAudio(blobUrl)
@@ -117,7 +121,7 @@ export default function PlaygroundPage() {
               className="glass-card p-6"
             >
               <h2 className="text-xl font-semibold text-navy mb-4">Text to Speech</h2>
-              
+
               <div className="mb-4">
                 <label className="block text-sm font-medium text-navy/70 mb-2">
                   Enter your text
@@ -206,17 +210,17 @@ export default function PlaygroundPage() {
                 className="glass-card p-6"
               >
                 <h3 className="text-lg font-semibold text-navy mb-4">Generated Audio</h3>
-                
+
                 <div className="bg-white/10 rounded-lg p-4 mb-4">
                   {/* Waveform Visualization */}
                   <div className="flex items-center justify-center mb-4">
                     <div className="waveform">
-                      {[1,2,3,4,5,6,7,8,9,10].map((_, i) => (
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((_, i) => (
                         <div key={i} className="waveform-bar" />
                       ))}
                     </div>
                   </div>
-                  
+
                   {/* Audio Controls */}
                   <div className="flex items-center justify-center space-x-4">
                     <button
@@ -225,12 +229,12 @@ export default function PlaygroundPage() {
                     >
                       {isPlaying ? <Pause className="w-6 h-6" /> : <PlayCircle className="w-6 h-6" />}
                     </button>
-                    
+
                     <button className="glass-button px-4 py-2 rounded-lg flex items-center space-x-2 text-navy">
                       <Download className="w-4 h-4" />
                       <span>Download</span>
                     </button>
-                    
+
                     <button className="glass-button px-4 py-2 rounded-lg flex items-center space-x-2 text-navy">
                       <Copy className="w-4 h-4" />
                       <span>Share</span>
@@ -253,16 +257,15 @@ export default function PlaygroundPage() {
               className="glass-card p-6"
             >
               <h3 className="text-lg font-semibold text-navy mb-4">Voice Selection</h3>
-              
+
               <div className="space-y-3">
                 {voices.map((voice) => (
                   <div
                     key={voice.id}
-                    className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                      selectedVoice === voice.id
+                    className={`p-3 rounded-lg border transition-all cursor-pointer ${selectedVoice === voice.id
                         ? 'border-berry-400 bg-berry-50/30'
                         : 'border-white/20 hover:border-white/30'
-                    }`}
+                      }`}
                     onClick={() => setSelectedVoice(voice.id)}
                   >
                     <div className="flex items-center justify-between">
@@ -270,11 +273,10 @@ export default function PlaygroundPage() {
                         <p className="font-medium text-navy text-sm">{voice.name}</p>
                         <p className="text-xs text-navy/60">{voice.type}</p>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        voice.status === 'Ready' 
-                          ? 'bg-green-100 text-green-700' 
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${voice.status === 'Ready'
+                          ? 'bg-green-100 text-green-700'
                           : 'bg-yellow-100 text-yellow-700'
-                      }`}>
+                        }`}>
                         {voice.status}
                       </span>
                     </div>
@@ -294,7 +296,7 @@ export default function PlaygroundPage() {
                 <Settings className="w-5 h-5" />
                 <span>Voice Settings</span>
               </h3>
-              
+
               <div className="space-y-4">
                 {/* Speed */}
                 <div>
@@ -307,7 +309,7 @@ export default function PlaygroundPage() {
                     max="2"
                     step="0.1"
                     value={voiceSettings.speed}
-                    onChange={(e) => setVoiceSettings({...voiceSettings, speed: parseFloat(e.target.value)})}
+                    onChange={(e) => setVoiceSettings({ ...voiceSettings, speed: parseFloat(e.target.value) })}
                     className="w-full accent-berry-500"
                   />
                 </div>
@@ -323,7 +325,7 @@ export default function PlaygroundPage() {
                     max="10"
                     step="1"
                     value={voiceSettings.pitch}
-                    onChange={(e) => setVoiceSettings({...voiceSettings, pitch: parseInt(e.target.value)})}
+                    onChange={(e) => setVoiceSettings({ ...voiceSettings, pitch: parseInt(e.target.value) })}
                     className="w-full accent-berry-500"
                   />
                 </div>
@@ -339,7 +341,7 @@ export default function PlaygroundPage() {
                     max="1"
                     step="0.1"
                     value={voiceSettings.volume}
-                    onChange={(e) => setVoiceSettings({...voiceSettings, volume: parseFloat(e.target.value)})}
+                    onChange={(e) => setVoiceSettings({ ...voiceSettings, volume: parseFloat(e.target.value) })}
                     className="w-full accent-berry-500"
                   />
                 </div>
@@ -351,7 +353,7 @@ export default function PlaygroundPage() {
                   </label>
                   <select
                     value={voiceSettings.emotion}
-                    onChange={(e) => setVoiceSettings({...voiceSettings, emotion: e.target.value})}
+                    onChange={(e) => setVoiceSettings({ ...voiceSettings, emotion: e.target.value })}
                     className="input-glass w-full"
                   >
                     <option value="neutral">Neutral</option>
@@ -360,6 +362,20 @@ export default function PlaygroundPage() {
                     <option value="excited">Excited</option>
                     <option value="calm">Calm</option>
                   </select>
+                </div>
+
+                {/* Watermarking */}
+                <div className="pt-2 flex items-center">
+                  <input
+                    type="checkbox"
+                    id="watermark-toggle"
+                    checked={addWatermark}
+                    onChange={(e) => setAddWatermark(e.target.checked)}
+                    className="w-4 h-4 text-berry-600 rounded focus:ring-berry-500 bg-white/10 border-white/20"
+                  />
+                  <label htmlFor="watermark-toggle" className="ml-2 block text-sm font-medium text-navy/70 cursor-pointer">
+                    Apply invisible watermark
+                  </label>
                 </div>
               </div>
             </motion.div>
@@ -372,19 +388,19 @@ export default function PlaygroundPage() {
               className="glass-card p-6"
             >
               <h3 className="text-lg font-semibold text-navy mb-4">Quick Actions</h3>
-              
+
               <div className="space-y-3">
                 <button onClick={onPickFile} className="w-full glass-button p-3 rounded-lg flex items-center space-x-3 hover:bg-white/20 transition-colors">
                   <Upload className="w-4 h-4 text-berry-600" />
                   <span className="font-medium text-navy">Upload Reference</span>
                 </button>
                 <input ref={fileInputRef} onChange={onFileChange} type="file" accept="audio/*,.wav,.mp3,.m4a,.flac" className="hidden" />
-                
+
                 <button className="w-full glass-button p-3 rounded-lg flex items-center space-x-3 hover:bg-white/20 transition-colors" disabled>
                   <Mic className="w-4 h-4 text-berry-600" />
                   <span className="font-medium text-navy">Record Voice (soon)</span>
                 </button>
-                
+
                 <button className="w-full glass-button p-3 rounded-lg flex items-center space-x-3 hover:bg-white/20 transition-colors" disabled>
                   <Zap className="w-4 h-4 text-berry-600" />
                   <span className="font-medium text-navy">API Access</span>

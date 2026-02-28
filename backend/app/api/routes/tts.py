@@ -341,6 +341,7 @@ async def clone_speech(
     language: str = Form("en"),
     reference: UploadFile = File(...),
     model_dir: Optional[str] = Form(None),
+    watermark: Optional[str] = Form(None),
 ):
     """Zero-shot cloning via XTTS v2. Returns generated audio file."""
     # Basic validations
@@ -367,8 +368,21 @@ async def clone_speech(
                 xtts = ZeroShotXTTS.instance()
                 audio_bytes = xtts.synthesize(text=text, speaker_wav_path=ref_path, language=language)
         else:
-            xtts = ZeroShotXTTS.instance()
-            audio_bytes = xtts.synthesize(text=text, speaker_wav_path=ref_path, language=language)
+            try:
+                import modal
+                print("Attempting to use Modal GPU inference...")
+                
+                with open(ref_path, 'rb') as f:
+                    ref_bytes = f.read()
+                    
+                xtts_func = modal.Function.lookup("vcaas-xtts", "ModalXTTS.synthesize")
+                # remote() will trigger the cold start enter() method if container is sleeping
+                audio_bytes = xtts_func.remote(text=text, speaker_wav_bytes=ref_bytes, language=language)
+                print("Successfully generated audio via Modal GPU!")
+            except Exception as e:
+                print(f"Modal inference failed ({e}). Falling back to local CPU.")
+                xtts = ZeroShotXTTS.instance()
+                audio_bytes = xtts.synthesize(text=text, speaker_wav_path=ref_path, language=language)
 
         # Write output wav
         out_dir = os.path.join("data", "tts_outputs")
@@ -379,11 +393,13 @@ async def clone_speech(
             f.write(audio_bytes)
 
         # Optional watermark embed (robust)
-        try:
-            wm = WatermarkService()
-            out_path = await wm.embed_watermark(out_path, watermark_id=f"wm_{job_id}")
-        except Exception:
-            pass
+        if watermark == 'true':
+            try:
+                wm = WatermarkService()
+                out_path = await wm.embed_watermark(out_path, watermark_id=f"a1b2c3d4e5f60718", method='robust')
+            except Exception as e:
+                print(f"Watermarking failed: {e}")
+                pass
 
         return FileResponse(out_path, media_type="audio/wav", filename=os.path.basename(out_path))
     except HTTPException:
